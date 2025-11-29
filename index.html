@@ -2,21 +2,29 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>근린핏</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>MyNearFit</title>
     <link rel="stylesheet" href="styles.css">
-
-    <!-- 카카오맵 JavaScript SDK -->
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=bee6691adaec64b4b2374bfb592e9376&autoload=false"></script>
 </head>
 <body>
-    <div id="app">
-        <header>근린핏</header>
+    <!-- 로딩 화면 -->
+    <div id="loading-screen">
+        <div class="loading-content">
+            <p>현재 위치를 불러오고 있습니다...</p>
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <!-- 실제 앱 메인 화면 -->
+    <div id="app" class="hidden">
+        <header>MyNearFit</header>
         <main>
             <div id="map"></div>
         </main>
     </div>
 
+    <!-- 카카오맵 SDK + script.js -->
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=bee6691adaec64b4b2374bfb592e9376&autoload=false"></script>
     <script src="script.js"></script>
 </body>
 </html>
