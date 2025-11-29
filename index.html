@@ -7,23 +7,38 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- 로딩 화면 -->
-    <div id="loading-screen">
+    <!-- 1) 권한 안내 + 시작 버튼 화면 -->
+    <div id="permission-screen">
+        <div class="permission-content">
+            <h1>MyNearFit</h1>
+            <p>현재 위치를 기반으로 근처 운동 시설을 찾아드립니다.</p>
+            <button id="start-button">내 위치로 시작하기</button>
+            <small>버튼을 누르면 브라우저에서 위치 권한을 요청합니다.</small>
+        </div>
+    </div>
+
+    <!-- 2) 전체 로딩 화면 (지도 초기화 동안만 사용) -->
+    <div id="loading-screen" class="hidden">
         <div class="loading-content">
-            <p>현재 위치를 불러오고 있습니다...</p>
+            <p>지도를 준비하고 있습니다...</p>
             <div class="spinner"></div>
         </div>
     </div>
 
-    <!-- 실제 앱 메인 화면 -->
+    <!-- 3) 실제 앱 메인 화면 -->
     <div id="app" class="hidden">
         <header>MyNearFit</header>
         <main>
+            <!-- 지도 영역 -->
             <div id="map"></div>
+            <!-- 위치/상태 메시지 영역 -->
+            <div id="status-bar" class="hidden">
+                <span id="status-text"></span>
+            </div>
         </main>
     </div>
 
-    <!-- 카카오맵 SDK + script.js -->
+    <!-- Kakao Maps SDK + 앱 스크립트 -->
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=bee6691adaec64b4b2374bfb592e9376&autoload=false"></script>
     <script src="script.js"></script>
 </body>

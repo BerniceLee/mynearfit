@@ -1,135 +1,185 @@
-// ========== 전역 변수 ==========
+// ========== 전역 변수 및 상수 ==========
 let map;
+let currentMarker;
+const FALLBACK_COORDS = { lat: 37.5665, lng: 126.9780 }; // 서울 시청
 
-// ========== 페이지 로드 시 초기화 ==========
-window.addEventListener('load', () => {
-    // 로딩 화면 표시
-    showLoadingScreen();
+// ========== DOM 요소 참조 (페이지 로드 후 초기화) ==========
+let permissionScreen;
+let loadingScreen;
+let app;
+let startButton;
+let statusBar;
+let statusText;
 
-    // 현재 위치 권한 요청
-    requestUserLocation();
+// ========== 초기화 ==========
+window.addEventListener("load", () => {
+    // DOM 요소 참조 초기화
+    permissionScreen = document.getElementById("permission-screen");
+    loadingScreen = document.getElementById("loading-screen");
+    app = document.getElementById("app");
+    startButton = document.getElementById("start-button");
+    statusBar = document.getElementById("status-bar");
+    statusText = document.getElementById("status-text");
+
+    // 오직 "내 위치로 시작하기" 버튼 이벤트만 연결
+    if (startButton) {
+        startButton.addEventListener("click", handleStart);
+    }
+
+    // 초기 상태 확인 (디버깅용)
+    console.log("페이지 로드 완료 - 온보딩 화면만 표시");
 });
 
-// ========== 현재 위치 권한 요청 ==========
-function requestUserLocation() {
-    // Geolocation API 지원 여부 확인
+// ========== 시작 버튼 클릭 핸들러 ==========
+function handleStart() {
+    console.log("시작 버튼 클릭됨");
+
+    // 1) 권한 안내 화면 숨기고 로딩 화면 표시
+    if (permissionScreen) permissionScreen.classList.add("hidden");
+    if (loadingScreen) loadingScreen.classList.remove("hidden");
+
+    // 2) kakao.maps.load 내부에서 fallback 좌표로 지도를 먼저 생성
+    kakao.maps.load(function () {
+        console.log("카카오맵 SDK 로드 완료");
+
+        const container = document.getElementById("map");
+        const options = {
+            center: new kakao.maps.LatLng(FALLBACK_COORDS.lat, FALLBACK_COORDS.lng),
+            level: 4
+        };
+
+        // 지도 생성 (fallback 위치 기준)
+        map = new kakao.maps.Map(container, options);
+        console.log("지도 생성 완료 (fallback 좌표)");
+
+        // fallback 위치에 기본 마커
+        const fallbackPosition = new kakao.maps.LatLng(FALLBACK_COORDS.lat, FALLBACK_COORDS.lng);
+        currentMarker = new kakao.maps.Marker({ position: fallbackPosition });
+        currentMarker.setMap(map);
+        console.log("기본 마커 생성 완료");
+
+        // 3) 지도 준비 완료 → 로딩 화면 숨기고 앱 화면 표시
+        if (loadingScreen) loadingScreen.classList.add("hidden");
+        if (app) app.classList.remove("hidden");
+        console.log("메인 앱 화면 표시 완료");
+
+        // 4) 상태 메시지 표시
+        showStatusMessage("현재 위치를 불러오는 중입니다...");
+
+        // 5) 이제 비동기로 현재 위치 요청
+        requestCurrentPosition();
+    });
+}
+
+// ========== Geolocation 요청 함수 ==========
+function requestCurrentPosition() {
+    console.log("Geolocation 요청 시작");
+
     if (!navigator.geolocation) {
-        console.warn('이 브라우저는 위치 서비스를 지원하지 않습니다.');
-        alert('이 브라우저는 위치 서비스를 지원하지 않습니다.\n기본 위치(서울)로 지도를 표시합니다.');
-        // Fallback: 서울 시청 좌표 사용
-        initMap(37.5665, 126.9780);
+        console.warn("Geolocation not supported");
+        showStatusMessage("현재 위치를 가져오지 못해 기본 위치로 지도를 보여드리고 있어요.");
         return;
     }
 
-    // 위치 정보 요청
     navigator.geolocation.getCurrentPosition(
         // 성공 콜백
         (position) => {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            console.log('현재 위치:', latitude, longitude);
+            const { latitude, longitude } = position.coords;
+            console.log("위치 정보 획득 성공:", latitude, longitude);
 
-            // 현재 위치로 지도 초기화
-            initMap(latitude, longitude);
+            // 지도 중심을 현재 위치로 이동
+            updateMapToCurrentPosition(latitude, longitude);
+
+            // 상태 메시지 업데이트
+            showStatusMessage("현재 위치 기준으로 지도를 보여드리고 있어요.");
+
+            // 3초 후 상태 메시지 자동 숨김
+            setTimeout(() => {
+                hideStatusMessage();
+            }, 3000);
         },
         // 실패 콜백
         (error) => {
-            console.error('위치 권한 오류:', error);
+            // 콘솔에만 상세 에러 로그 출력
+            console.error("Geolocation error:", error);
+            console.error("Error code:", error.code);
+            console.error("Error message:", error.message);
 
-            let errorMessage = '위치 정보를 가져올 수 없습니다.\n';
+            // 에러 타입별 콘솔 로그
             switch (error.code) {
                 case error.PERMISSION_DENIED:
-                    errorMessage += '위치 권한이 거부되었습니다.\n기본 위치(서울)로 지도를 표시합니다.';
+                    console.error("PERMISSION_DENIED: 사용자가 위치 권한을 거부했습니다.");
                     break;
                 case error.POSITION_UNAVAILABLE:
-                    errorMessage += '위치 정보를 사용할 수 없습니다.\n기본 위치(서울)로 지도를 표시합니다.';
+                    console.error("POSITION_UNAVAILABLE: 위치 정보를 가져올 수 없습니다.");
                     break;
                 case error.TIMEOUT:
-                    errorMessage += '위치 정보 요청 시간이 초과되었습니다.\n기본 위치(서울)로 지도를 표시합니다.';
+                    console.error("TIMEOUT: 위치 정보 요청 시간이 초과되었습니다.");
                     break;
                 default:
-                    errorMessage += '알 수 없는 오류가 발생했습니다.\n기본 위치(서울)로 지도를 표시합니다.';
+                    console.error("UNKNOWN ERROR:", error);
             }
 
-            alert(errorMessage);
+            // 사용자에게는 간단한 메시지만 표시
+            showStatusMessage("현재 위치를 가져오지 못해 기본 위치로 지도를 보여드리고 있어요. 잠시 후 다시 접속해 주세요.");
 
-            // Fallback: 서울 시청 좌표 사용
-            initMap(37.5665, 126.9780);
+            // 5초 후 상태 메시지 자동 숨김
+            setTimeout(() => {
+                hideStatusMessage();
+            }, 5000);
         },
-        // 옵션
+        // 옵션 (속도 개선을 위해 완화)
         {
-            enableHighAccuracy: true, // 높은 정확도 요청 (GPS 사용)
-            timeout: 10000, // 10초 타임아웃
-            maximumAge: 0 // 캐시된 위치 사용 안 함
+            enableHighAccuracy: false, // GPS 사용 안 함 (빠른 응답)
+            timeout: 5000, // 5초 타임아웃
+            maximumAge: 60000 // 1분 이내 캐시 허용
         }
     );
 }
 
-// ========== 카카오맵 초기화 ==========
-function initMap(latitude, longitude) {
-    // 카카오맵 SDK 로드 (autoload=false 옵션 사용)
-    kakao.maps.load(() => {
-        const container = document.getElementById('map');
-        const options = {
-            center: new kakao.maps.LatLng(latitude, longitude),
-            level: 4 // 확대 레벨 (1~14, 숫자가 작을수록 확대)
-        };
+// ========== 지도 업데이트 함수 ==========
+function updateMapToCurrentPosition(lat, lng) {
+    console.log("지도 중심 업데이트:", lat, lng);
 
-        // 지도 생성
-        map = new kakao.maps.Map(container, options);
+    if (!map) return;
 
-        // 현재 위치 마커 표시
-        const markerPosition = new kakao.maps.LatLng(latitude, longitude);
-        new kakao.maps.Marker({
-            position: markerPosition,
-            map: map
-        });
+    const newCenter = new kakao.maps.LatLng(lat, lng);
 
-        console.log('맵 초기화 완료:', latitude, longitude);
+    // 지도 중심 이동
+    map.setCenter(newCenter);
 
-        // 지도 로딩 완료 후 로딩 화면 숨기고 메인 앱 표시
-        hideLoadingScreen();
-        showMainApp();
-    });
-}
-
-// ========== UI 제어 함수 ==========
-
-/**
- * 로딩 화면 표시
- */
-function showLoadingScreen() {
-    const loadingScreen = document.getElementById('loading-screen');
-    if (loadingScreen) {
-        loadingScreen.classList.remove('hidden');
+    // 기존 마커 제거
+    if (currentMarker) {
+        currentMarker.setMap(null);
     }
+
+    // 새 위치에 마커 생성
+    currentMarker = new kakao.maps.Marker({ position: newCenter });
+    currentMarker.setMap(map);
+
+    console.log("마커 업데이트 완료");
 }
 
-/**
- * 로딩 화면 숨김
- */
-function hideLoadingScreen() {
-    const loadingScreen = document.getElementById('loading-screen');
-    if (loadingScreen) {
-        loadingScreen.classList.add('hidden');
-    }
+// ========== 상태 메시지 유틸리티 ==========
+function showStatusMessage(message) {
+    if (!statusBar || !statusText) return;
+    statusText.textContent = message;
+    statusBar.classList.remove("hidden");
+    console.log("상태 메시지 표시:", message);
 }
 
-/**
- * 메인 앱 화면 표시
- */
-function showMainApp() {
-    const app = document.getElementById('app');
-    if (app) {
-        app.classList.remove('hidden');
-    }
+function hideStatusMessage() {
+    if (!statusBar) return;
+    statusBar.classList.add("hidden");
+    console.log("상태 메시지 숨김");
 }
 
-// ========== 반응형 대응 (화면 회전 시 지도 리사이즈) ==========
-window.addEventListener('resize', () => {
-    if (map) {
-        // 지도 리사이즈 (모바일 가로/세로 회전 대응)
+// ========== 리사이즈 대응 ==========
+window.addEventListener("resize", () => {
+    if (map && currentMarker) {
         map.relayout();
+        map.setCenter(currentMarker.getPosition());
+        console.log("지도 리사이즈 완료");
     }
 });
 
@@ -147,7 +197,7 @@ async function fetchNearbyFacilities(latitude, longitude) {
         displayFacilities(data);
     } catch (error) {
         console.error('시설 데이터 로딩 실패:', error);
-        alert('주변 시설 정보를 불러오는데 실패했습니다.');
+        showStatusMessage('주변 시설 정보를 불러오는데 실패했습니다.');
     }
 }
 */

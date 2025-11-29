@@ -7,171 +7,195 @@
 
 html,
 body {
-    width: 100%;
+    margin: 0;
+    padding: 0;
     height: 100%;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* ========== 공통 유틸리티 ========== */
 .hidden {
-    display: none !important;
+    display: none;
+}
+
+/* ========== 권한 안내 화면 ========== */
+#permission-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: #f5f5f5;
+    z-index: 100;
+}
+
+.permission-content {
+    max-width: 320px;
+    width: 100%;
+    padding: 24px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.permission-content h1 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #3b82f6;
+    margin-bottom: 12px;
+}
+
+.permission-content p {
+    font-size: 15px;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.permission-content small {
+    display: block;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #999;
+    line-height: 1.4;
+}
+
+#start-button {
+    margin-top: 16px;
+    padding: 12px 16px;
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    background: #3b82f6;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+#start-button:hover {
+    background: #2563eb;
+}
+
+#start-button:active {
+    opacity: 0.85;
 }
 
 /* ========== 로딩 화면 ========== */
 #loading-screen {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.85);
+    inset: 0;
     display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 9999;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 200;
 }
 
 .loading-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    background-color: white;
-    padding: 40px 30px;
+    padding: 20px 24px;
+    background: white;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    text-align: center;
 }
 
 .loading-content p {
-    font-size: 16px;
+    font-size: 15px;
     color: #333;
     font-weight: 500;
-    text-align: center;
-    margin: 0;
+    margin-bottom: 0;
 }
 
 .spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #4CAF50;
+    margin: 12px auto 0;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    border: 4px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
+    to {
         transform: rotate(360deg);
     }
 }
 
-/* ========== 앱 컨테이너 ========== */
+/* ========== 메인 앱 레이아웃 ========== */
 #app {
     display: flex;
     flex-direction: column;
-    width: 100%;
     height: 100vh;
 }
 
-/* ========== 헤더 ========== */
 header {
     flex: 0 0 56px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #4CAF50;
-    color: white;
     font-size: 18px;
     font-weight: bold;
     border-bottom: 1px solid #eee;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    z-index: 100;
+    background: white;
 }
 
-/* ========== 메인 영역 (지도 컨테이너) ========== */
 main {
     flex: 1;
-    position: relative;
-    overflow: hidden;
-    width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
-/* ========== 카카오맵 컨테이너 ========== */
 #map {
+    flex: 1;
     width: 100%;
-    height: 100%;
 }
 
-/* ========== 데스크톱 반응형 (모바일 뷰 중앙 정렬) ========== */
+#status-bar {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    font-size: 13px;
+    background: #f3f4f6;
+    color: #374151;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* ========== 데스크톱 반응형 ========== */
 @media (min-width: 768px) {
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #f5f5f5;
+    }
+
     #app {
         max-width: 480px;
-        margin: 0 auto;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        height: 80vh;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     }
 
-    #loading-screen {
-        /* 데스크톱에서도 전체 화면 유지 */
+    .permission-content {
+        max-width: 400px;
+        padding: 32px;
     }
 
-    .loading-content {
-        padding: 50px 40px;
+    .permission-content h1 {
+        font-size: 28px;
     }
 
-    .loading-content p {
-        font-size: 18px;
+    .permission-content p {
+        font-size: 16px;
     }
 
-    header {
-        font-size: 20px;
-    }
-}
-
-/* ========== 태블릿 반응형 ========== */
-@media (min-width: 481px) and (max-width: 767px) {
-    header {
-        flex: 0 0 60px;
-        font-size: 19px;
-    }
-}
-
-/* ========== 큰 데스크톱 반응형 ========== */
-@media (min-width: 1024px) {
-    #app {
-        max-width: 600px;
-    }
-
-    header {
-        flex: 0 0 64px;
-        font-size: 22px;
-    }
-
-    .loading-content {
-        padding: 60px 50px;
-    }
-
-    .spinner {
-        width: 60px;
-        height: 60px;
-    }
-}
-
-/* ========== 모바일 세로/가로 회전 대응 ========== */
-@media (max-width: 480px) {
-    .loading-content {
-        padding: 30px 25px;
-    }
-
-    .loading-content p {
-        font-size: 14px;
-    }
-
-    .spinner {
-        width: 40px;
-        height: 40px;
+    #start-button {
+        font-size: 17px;
+        padding: 14px 20px;
     }
 }
