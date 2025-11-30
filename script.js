@@ -30,36 +30,42 @@ window.addEventListener("load", () => {
 function handleStart() {
     console.log("시작 버튼 클릭됨 - 로딩 페이지로 전환");
 
-    // 1) 온보딩 페이지 숨기고 로딩 페이지 표시
-    if (onboardingPage) onboardingPage.classList.add("hidden");
-    if (loadingPage) loadingPage.classList.remove("hidden");
+    const onboardingPage = document.getElementById("onboarding-page");
+    const loadingPage = document.getElementById("loading-page");
+    const appPage = document.getElementById("app-page");
 
-    // 2) Kakao Maps SDK 로드 및 지도 초기화
+    // 1) 온보딩 숨기기
+    onboardingPage.classList.add("hidden");
+
+    // 2) 메인 페이지는 미리 보이게 (지도 div 크기 확보)
+    appPage.classList.remove("hidden");
+
+    // 3) 로딩 페이지를 위에 띄우기
+    loadingPage.classList.remove("hidden");
+
+    // 4) Kakao 지도 생성
     kakao.maps.load(function () {
         console.log("카카오맵 SDK 로드 완료");
 
         const container = document.getElementById("map");
-        const options = {
-            center: new kakao.maps.LatLng(FALLBACK_COORDS.lat, FALLBACK_COORDS.lng),
-            level: 4
-        };
+        const center = new kakao.maps.LatLng(FALLBACK_COORDS.lat, FALLBACK_COORDS.lng);
+        const options = { center, level: 4 };
 
-        // fallback 좌표로 지도 생성
         map = new kakao.maps.Map(container, options);
         console.log("지도 생성 완료 (fallback 좌표)");
 
-        // fallback 위치에 마커 생성
-        const fallbackPos = new kakao.maps.LatLng(FALLBACK_COORDS.lat, FALLBACK_COORDS.lng);
-        currentMarker = new kakao.maps.Marker({ position: fallbackPos });
+        currentMarker = new kakao.maps.Marker({ position: center });
         currentMarker.setMap(map);
         console.log("기본 마커 생성 완료");
 
-        // 3) 지도 준비 완료 → 로딩 페이지 숨기고 메인 페이지 표시
-        if (loadingPage) loadingPage.classList.add("hidden");
-        if (appPage) appPage.classList.remove("hidden");
-        console.log("메인 앱 화면 표시 완료");
+        // 지도가 hidden 상태에서 만들어졌을 수 있으니 레이아웃 재계산
+        map.relayout();
+        map.setCenter(center);
+        console.log("지도 레이아웃 재계산 완료");
 
-        // 4) 상태 메시지 표시 및 현재 위치 요청
+        // 5) 로딩 페이지 숨기고 상태메시지 + 위치 요청
+        loadingPage.classList.add("hidden");
+
         showStatusMessage("현재 위치를 불러오는 중입니다...");
         requestCurrentPosition();
     });
