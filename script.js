@@ -344,17 +344,20 @@ function setupDrawerUI() {
 
     drawer.style.height = drawerMinHeight + "px";
 
-    const getClientY = (e) => (e.touches ? e.touches[0].clientY : e.clientY);
+    function getClientY(e) {
+        if (e.touches && e.touches.length > 0) return e.touches[0].clientY;
+        return e.clientY;
+    }
 
-    const onDragStart = (e) => {
+    function onDragStart(e) {
         isDragging = true;
         startY = getClientY(e);
         startHeight = drawer.offsetHeight;
         drawer.style.transition = "none";
         e.preventDefault();
-    };
+    }
 
-    const onDragMove = (e) => {
+    function onDragMove(e) {
         if (!isDragging) return;
         const currentY = getClientY(e);
         const deltaY = startY - currentY; // 위로 드래그 = 양수
@@ -362,24 +365,26 @@ function setupDrawerUI() {
         if (newHeight < drawerMinHeight) newHeight = drawerMinHeight;
         if (newHeight > drawerMaxHeight) newHeight = drawerMaxHeight;
         drawer.style.height = newHeight + "px";
-    };
+        e.preventDefault();
+    }
 
-    const onDragEnd = () => {
+    function onDragEnd() {
         if (!isDragging) return;
         isDragging = false;
         drawer.style.transition = "height 0.2s ease-out";
         const currentHeight = drawer.offsetHeight;
         const middle = (drawerMinHeight + drawerMaxHeight) / 2;
         drawer.style.height = currentHeight < middle ? drawerMinHeight + "px" : drawerMaxHeight + "px";
-    };
+    }
 
+    // 마우스 이벤트
     drawerHandle.addEventListener("mousedown", onDragStart);
-    drawerHandle.addEventListener("touchstart", onDragStart);
-
     window.addEventListener("mousemove", onDragMove);
-    window.addEventListener("touchmove", onDragMove, { passive: false });
-
     window.addEventListener("mouseup", onDragEnd);
+
+    // 터치 이벤트 (passive:false로 등록)
+    drawerHandle.addEventListener("touchstart", onDragStart, { passive: false });
+    window.addEventListener("touchmove", onDragMove, { passive: false });
     window.addEventListener("touchend", onDragEnd);
 
     if (facilityList) {

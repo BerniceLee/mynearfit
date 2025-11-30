@@ -37,6 +37,7 @@ body {
     background: #ffffff;
     text-align: center;
     overflow-y: auto;
+    box-sizing: border-box;
 }
 
 #onboarding-page.hidden {
@@ -52,6 +53,60 @@ body {
 
 .onboarding-illustration {
     margin-top: 20px;
+}
+
+/* 모바일에서 온보딩 여백 줄이기 (버튼이 스크롤 없이 보이도록) */
+@media (max-width: 768px) {
+    #onboarding-page {
+        padding: 16px 20px;
+        justify-content: space-between;
+    }
+
+    .onboarding-top {
+        gap: 16px;
+        margin-top: 8px;
+    }
+
+    .onboarding-illustration {
+        margin-top: 4px;
+        width: 160px;
+        max-width: 55vw;
+    }
+
+    .onboarding-illustration svg {
+        width: 100%;
+        height: auto;
+    }
+
+    .onboarding-content {
+        gap: 12px;
+        margin-top: 8px;
+    }
+
+    .service-title {
+        font-size: 28px;
+        margin-bottom: 4px;
+    }
+
+    .service-subtitle {
+        font-size: 16px;
+        margin-bottom: 2px;
+    }
+
+    .service-description {
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    #start-button {
+        margin-top: 8px;
+        margin-bottom: 12px;
+    }
+
+    .permission-note {
+        margin-top: 4px;
+        font-size: 11px;
+    }
 }
 
 .onboarding-content {
@@ -427,6 +482,17 @@ main {
 
 #recenter-button:active {
     transform: scale(0.95);
+}
+
+/* 모바일에서도 recenter 버튼 확실히 표시 */
+@media (max-width: 768px) {
+    #recenter-button {
+        right: 12px;
+        bottom: 12px;
+        width: 44px;
+        height: 44px;
+        z-index: 25; /* drawer(20)보다 위 */
+    }
 }
 
 /* ========== 추천 카드 영역 ========== */
