@@ -23,6 +23,19 @@ let recenterButton;
 let searchInput;
 let searchButton;
 
+// ========== UI 인터랙션 변수 ==========
+let drawer;
+let drawerHandle;
+let isDragging = false;
+let startY = 0;
+let startHeight = 0;
+let drawerMinHeight;
+let drawerMaxHeight;
+
+let recommendSection;
+let recommendHideTimer;
+let hasRecommendHiddenOnce = false;
+
 // ========== 초기화 ==========
 window.addEventListener("load", () => {
     console.log("[DEBUG] script loaded");
@@ -126,6 +139,9 @@ function handleStart() {
 
         showStatusMessage("현재 위치를 불러오는 중입니다...");
         requestCurrentPosition();
+
+        // 6) 추천 카드 자동 숨김 타이머 시작
+        startRecommendHideTimer();
     });
 }
 
@@ -321,22 +337,66 @@ function setupSearch() {
     console.log("검색 기능 초기화 완료");
 }
 
-// ========== Drawer UI 토글 ==========
-let drawer;
-let drawerHandle;
-
+// ========== Drawer UI 드래그 가능 Bottom Sheet ==========
 function setupDrawerUI() {
     drawer = document.getElementById("drawer");
     drawerHandle = document.getElementById("drawer-handle");
 
-    if (drawerHandle && drawer) {
-        drawerHandle.addEventListener("click", () => {
-            drawer.classList.toggle("collapsed");
-            drawer.classList.toggle("expanded");
-            console.log("Drawer 토글:", drawer.classList.contains("expanded") ? "확장" : "축소");
-        });
-        console.log("[DEBUG] Drawer UI 초기화 완료");
+    if (!drawer || !drawerHandle) return;
+
+    const vh = window.innerHeight;
+    drawerMinHeight = vh * 0.30; // 30vh
+    drawerMaxHeight = vh * 0.80; // 80vh
+
+    drawer.style.height = drawerMinHeight + "px";
+    drawer.classList.add("collapsed");
+
+    function onDragStart(event) {
+        isDragging = true;
+        startY = event.touches ? event.touches[0].clientY : event.clientY;
+        startHeight = drawer.offsetHeight;
+        drawer.style.transition = "none";
     }
+
+    function onDragMove(event) {
+        if (!isDragging) return;
+        const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+        const deltaY = startY - clientY; // 위로 드래그 = 양수
+
+        let newHeight = startHeight + deltaY;
+        newHeight = Math.max(drawerMinHeight, Math.min(drawerMaxHeight, newHeight));
+        drawer.style.height = newHeight + "px";
+    }
+
+    function onDragEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        drawer.style.transition = "height 0.2s ease-out";
+
+        const currentHeight = drawer.offsetHeight;
+        const middle = (drawerMinHeight + drawerMaxHeight) / 2;
+
+        if (currentHeight < middle) {
+            drawer.style.height = drawerMinHeight + "px";
+            drawer.classList.add("collapsed");
+            drawer.classList.remove("expanded");
+        } else {
+            drawer.style.height = drawerMaxHeight + "px";
+            drawer.classList.add("expanded");
+            drawer.classList.remove("collapsed");
+        }
+    }
+
+    drawerHandle.addEventListener("mousedown", onDragStart);
+    drawerHandle.addEventListener("touchstart", onDragStart);
+
+    window.addEventListener("mousemove", onDragMove);
+    window.addEventListener("touchmove", onDragMove);
+
+    window.addEventListener("mouseup", onDragEnd);
+    window.addEventListener("touchend", onDragEnd);
+
+    console.log("[DEBUG] Drawer UI 드래그 기능 초기화 완료");
 }
 
 // ========== 반경 칩 UI ==========
@@ -427,11 +487,61 @@ function setupFacilityButtons() {
     console.log("[DEBUG] 시설 카드 버튼 UI 초기화 완료");
 }
 
+// ========== 추천 카드 자동 숨김 기능 ==========
+function hideRecommendSection() {
+    if (!recommendSection || hasRecommendHiddenOnce) return;
+    recommendSection.classList.add("hidden");
+    hasRecommendHiddenOnce = true;
+    console.log("[DEBUG] 추천 카드 숨김");
+}
+
+function startRecommendHideTimer() {
+    recommendSection = document.getElementById("recommend-section");
+    const mapWrapper = document.getElementById("map-wrapper");
+
+    if (!recommendSection) return;
+
+    // 초기에는 보이도록
+    recommendSection.classList.remove("hidden");
+
+    // 4초 후 자동 숨김
+    if (recommendHideTimer) clearTimeout(recommendHideTimer);
+    recommendHideTimer = setTimeout(hideRecommendSection, 4000);
+
+    // 지도 상호작용 시 즉시 숨김
+    if (mapWrapper) {
+        mapWrapper.addEventListener("mousedown", hideRecommendSection, { once: true });
+        mapWrapper.addEventListener("touchstart", hideRecommendSection, { once: true });
+    }
+
+    // drawer 드래그 시작 시 즉시 숨김
+    if (drawerHandle) {
+        drawerHandle.addEventListener("mousedown", hideRecommendSection, { once: true });
+        drawerHandle.addEventListener("touchstart", hideRecommendSection, { once: true });
+    }
+
+    console.log("[DEBUG] 추천 카드 자동 숨김 타이머 시작");
+}
+
 // ========== 리사이즈 대응 ==========
 window.addEventListener("resize", () => {
     if (map && currentMarker) {
         map.relayout();
         map.setCenter(currentMarker.getPosition());
         console.log("지도 리사이즈 완료");
+    }
+
+    // drawer 높이 재조정
+    if (drawer && drawerMinHeight && drawerMaxHeight) {
+        const vh = window.innerHeight;
+        drawerMinHeight = vh * 0.30;
+        drawerMaxHeight = vh * 0.80;
+
+        // 현재 상태 유지하면서 높이 재조정
+        if (drawer.classList.contains("collapsed")) {
+            drawer.style.height = drawerMinHeight + "px";
+        } else if (drawer.classList.contains("expanded")) {
+            drawer.style.height = drawerMaxHeight + "px";
+        }
     }
 });
