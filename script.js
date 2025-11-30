@@ -36,6 +36,16 @@ let recommendSection;
 let recommendHideTimer;
 let hasRecommendHiddenOnce = false;
 
+// ========== 시설 데이터 및 마커 관리 ==========
+let facilities = []; // 전체 시설 데이터
+let visibleFacilities = []; // 현재 필터링된 시설
+let facilityMarkers = []; // 지도에 표시된 시설 마커들
+let facilityMarkerImage; // 시설 마커 아이콘
+
+// ========== 검색 결과 관리 ==========
+let searchResults = [];
+let searchResultsSheet;
+
 // ========== 초기화 ==========
 window.addEventListener("load", () => {
     console.log("[DEBUG] script loaded");
@@ -94,13 +104,21 @@ function handleStart() {
     kakao.maps.load(function () {
         console.log("카카오맵 SDK 로드 완료");
 
-        // 내 위치 마커 아이콘 생성 (빨간색)
+        // 내 위치 마커 아이콘 생성 (빨간색, 크기 축소)
         userMarkerImage = new kakao.maps.MarkerImage(
             "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png",
-            new kakao.maps.Size(64, 69),
-            { offset: new kakao.maps.Point(27, 69) }
+            new kakao.maps.Size(32, 36),
+            { offset: new kakao.maps.Point(16, 36) }
         );
         console.log("빨간 마커 이미지 생성 완료");
+
+        // 시설 마커 아이콘 생성 (별 모양, 작은 크기)
+        facilityMarkerImage = new kakao.maps.MarkerImage(
+            "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png",
+            new kakao.maps.Size(24, 35),
+            { offset: new kakao.maps.Point(12, 35) }
+        );
+        console.log("시설 마커 이미지 생성 완료");
 
         // Places 서비스 초기화
         placesService = new kakao.maps.services.Places();
@@ -120,11 +138,6 @@ function handleStart() {
         currentMarker.setMap(map);
         console.log("기본 마커 생성 완료 (빨간색)");
 
-        // 지도가 hidden 상태에서 만들어졌을 수 있으니 레이아웃 재계산
-        map.relayout();
-        map.setCenter(center);
-        console.log("지도 레이아웃 재계산 완료");
-
         // 검색 기능 초기화
         setupSearch();
 
@@ -134,8 +147,21 @@ function handleStart() {
         setupFilterChips();
         setupFacilityButtons();
 
+        // 검색 결과 sheet 초기화
+        setupSearchResultsSheet();
+
+        // 더미 시설 데이터 초기화 (실제로는 API에서 가져올 데이터)
+        initializeFacilities();
+
         // 5) 로딩 페이지 숨기고 상태메시지 + 위치 요청
         if (loadingPage) loadingPage.classList.add("hidden");
+
+        // 지도 레이아웃 재계산 (모든 UI가 준비된 후)
+        setTimeout(() => {
+            map.relayout();
+            map.setCenter(center);
+            console.log("지도 레이아웃 재계산 완료");
+        }, 100);
 
         showStatusMessage("현재 위치를 불러오는 중입니다...");
         requestCurrentPosition();
@@ -294,32 +320,17 @@ function setupSearch() {
                 return;
             }
 
-            const first = result[0];
-            const newPos = new kakao.maps.LatLng(first.y, first.x);
+            // 검색 결과를 최대 10개까지 저장
+            searchResults = result.slice(0, 10);
+            console.log("검색 결과:", searchResults.length, "개");
 
-            console.log("검색 결과:", first.place_name, first.y, first.x);
+            // 검색 결과를 sheet에 렌더링
+            renderSearchResults();
 
-            // 지도 중심 이동
-            map.setCenter(newPos);
-
-            // 기존 검색 마커 제거
-            if (searchMarker) {
-                searchMarker.setMap(null);
+            // 검색 결과 sheet 표시
+            if (searchResultsSheet) {
+                searchResultsSheet.classList.remove("hidden");
             }
-
-            // 새 검색 마커 생성 (기본 마커)
-            searchMarker = new kakao.maps.Marker({
-                position: newPos
-            });
-            searchMarker.setMap(map);
-
-            showStatusMessage(`"${first.place_name}" 근처로 이동했어요.`);
-            console.log("검색 마커 생성 완료");
-
-            // 3초 후 상태 메시지 숨김
-            setTimeout(() => {
-                hideStatusMessage();
-            }, 3000);
         });
     }
 
@@ -545,3 +556,154 @@ window.addEventListener("resize", () => {
         }
     }
 });
+
+// ========== 시설 데이터 초기화 ==========
+function initializeFacilities() {
+    // 더미 시설 데이터 (실제로는 API에서 가져올 데이터)
+    facilities = [
+        { id: 1, name: "동네 근린공원", lat: 37.5665, lng: 126.9790, type: "outdoor", isFree: true, isIndoor: false, isOpenNow: true, isCourse: false, distance: 350 },
+        { id: 2, name: "시립 체육관", lat: 37.5670, lng: 126.9785, type: "indoor", isFree: false, isIndoor: true, isOpenNow: true, isCourse: false, distance: 720 },
+        { id: 3, name: "올림픽 둘레길 5구간", lat: 37.5655, lng: 126.9795, type: "course", isFree: true, isIndoor: false, isOpenNow: true, isCourse: true, distance: 1200 },
+        { id: 4, name: "구립 수영장", lat: 37.5680, lng: 126.9775, type: "indoor", isFree: false, isIndoor: true, isOpenNow: false, isCourse: false, distance: 1500 },
+        { id: 5, name: "야외 농구장", lat: 37.5675, lng: 126.9800, type: "outdoor", isFree: true, isIndoor: false, isOpenNow: true, isCourse: false, distance: 850 }
+    ];
+
+    // 초기에는 모든 시설을 표시
+    visibleFacilities = [...facilities];
+
+    // 시설 개수 업데이트
+    updateFacilityCount(visibleFacilities.length);
+
+    // 시설 마커 렌더링
+    renderFacilityMarkers(visibleFacilities);
+
+    console.log("[DEBUG] 시설 데이터 초기화 완료:", facilities.length, "개");
+}
+
+// ========== 시설 개수 업데이트 ==========
+function updateFacilityCount(count) {
+    const countEl = document.getElementById("facility-count");
+    if (!countEl) return;
+    countEl.textContent = `${count}곳`;
+    console.log("[DEBUG] 시설 개수 업데이트:", count, "곳");
+}
+
+// ========== 시설 마커 렌더링 ==========
+function renderFacilityMarkers(facilitiesToShow) {
+    if (!map || !facilityMarkerImage) return;
+
+    // 기존 마커 모두 제거
+    facilityMarkers.forEach(marker => marker.setMap(null));
+    facilityMarkers = [];
+
+    // 새 마커 생성
+    facilitiesToShow.forEach(facility => {
+        const position = new kakao.maps.LatLng(facility.lat, facility.lng);
+        const marker = new kakao.maps.Marker({
+            position: position,
+            image: facilityMarkerImage,
+            title: facility.name
+        });
+        marker.setMap(map);
+        facilityMarkers.push(marker);
+    });
+
+    console.log("[DEBUG] 시설 마커 렌더링 완료:", facilityMarkers.length, "개");
+}
+
+// ========== 검색 결과 Sheet 초기화 ==========
+function setupSearchResultsSheet() {
+    searchResultsSheet = document.getElementById("search-results-sheet");
+    const closeButton = document.getElementById("search-results-close");
+
+    if (!searchResultsSheet) {
+        console.warn("검색 결과 sheet를 찾을 수 없습니다");
+        return;
+    }
+
+    // 닫기 버튼 이벤트
+    if (closeButton) {
+        closeButton.addEventListener("click", () => {
+            searchResultsSheet.classList.add("hidden");
+        });
+    }
+
+    console.log("[DEBUG] 검색 결과 sheet 초기화 완료");
+}
+
+// ========== 검색 결과 렌더링 ==========
+function renderSearchResults() {
+    const listContainer = document.getElementById("search-results-list");
+    if (!listContainer) return;
+
+    // 기존 내용 제거
+    listContainer.innerHTML = "";
+
+    // 검색 결과가 없으면
+    if (searchResults.length === 0) {
+        listContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #9ca3af;">검색 결과가 없습니다.</div>';
+        return;
+    }
+
+    // 각 검색 결과를 아이템으로 추가
+    searchResults.forEach(place => {
+        const item = document.createElement("div");
+        item.className = "search-result-item";
+        item.setAttribute("data-lat", place.y);
+        item.setAttribute("data-lng", place.x);
+
+        const name = document.createElement("div");
+        name.className = "result-name";
+        name.textContent = place.place_name;
+
+        const address = document.createElement("div");
+        address.className = "result-address";
+        address.textContent = place.road_address_name || place.address_name || "주소 정보 없음";
+
+        item.appendChild(name);
+        item.appendChild(address);
+
+        // 클릭 이벤트
+        item.addEventListener("click", () => {
+            handleSearchResultClick(place.y, place.x, place.place_name);
+        });
+
+        listContainer.appendChild(item);
+    });
+
+    console.log("[DEBUG] 검색 결과 렌더링 완료:", searchResults.length, "개");
+}
+
+// ========== 검색 결과 아이템 클릭 핸들러 ==========
+function handleSearchResultClick(lat, lng, placeName) {
+    const newPos = new kakao.maps.LatLng(lat, lng);
+
+    // 지도 중심 이동
+    map.setCenter(newPos);
+    map.setLevel(3); // 약간 줌인
+
+    // 기존 검색 마커 제거
+    if (searchMarker) {
+        searchMarker.setMap(null);
+    }
+
+    // 새 검색 마커 생성
+    searchMarker = new kakao.maps.Marker({
+        position: newPos
+    });
+    searchMarker.setMap(map);
+
+    // 검색 결과 sheet 닫기
+    if (searchResultsSheet) {
+        searchResultsSheet.classList.add("hidden");
+    }
+
+    // 상태 메시지 표시
+    showStatusMessage(`"${placeName}" 근처로 이동했어요.`);
+    console.log("[DEBUG] 검색 결과 선택:", placeName);
+
+    // 3초 후 상태 메시지 숨김
+    setTimeout(() => {
+        hideStatusMessage();
+    }, 3000);
+}
