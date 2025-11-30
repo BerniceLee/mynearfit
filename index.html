@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>MyNearFit</title>
+    <title>근린핏</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- 1. 온보딩 페이지 -->
     <div id="onboarding-page">
         <div class="onboarding-card">
-            <h1 class="service-title">MyNearFit</h1>
+            <h1 class="service-title">근린핏</h1>
             <p class="service-subtitle">
-                현재 위치를 기반으로 근처 운동 시설을 찾아드립니다.
+                근처의 운동시설을 한눈에 확인해보세요.
             </p>
 
             <button id="start-button">내 위치로 시작하기</button>
@@ -38,15 +38,19 @@
         <header>
             <div class="header-left">
                 <span class="logo-dot"></span>
-                <span class="header-title">MyNearFit</span>
+                <span class="header-title">근린핏</span>
             </div>
             <div class="header-right">
-                <span class="header-tagline">내 근처 운동 한눈에</span>
+                <span class="header-tagline">근처의 운동시설을 보여드릴게요!</span>
             </div>
         </header>
 
         <main>
             <section id="top-panel">
+                <div class="page-heading">
+                    <h2>근린핏</h2>
+                    <p>근처의 운동시설을 한눈에 확인해보세요.</p>
+                </div>
                 <div class="location-summary">
                     <span class="label">현재 기준</span>
                     <span class="value" id="location-label">내 주변 2km 운동시설</span>
@@ -67,6 +71,14 @@
 
             <div id="map-wrapper">
                 <div id="map"></div>
+
+                <!-- 지도 위 검색 바 -->
+                <div id="map-search">
+                    <input id="search-input" type="text" placeholder="주소나 장소를 검색하세요">
+                    <button id="search-button">검색</button>
+                </div>
+
+                <!-- 내 위치로 다시 보기 버튼 -->
                 <button id="recenter-button">내 위치로<br>다시 보기</button>
             </div>
 
@@ -76,7 +88,7 @@
         </main>
     </div>
 
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=bee6691adaec64b4b2374bfb592e9376&autoload=false"></script>
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=bee6691adaec64b4b2374bfb592e9376&autoload=false&libraries=services"></script>
     <script src="script.js"></script>
 </body>
 </html>

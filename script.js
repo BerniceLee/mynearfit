@@ -1,7 +1,15 @@
 // ========== 전역 변수 및 상수 ==========
 let map;
-let currentMarker;
+let currentMarker; // 내 위치 마커 (빨간색)
+let searchMarker;  // 검색 결과 마커
 const FALLBACK_COORDS = { lat: 37.5665, lng: 126.9780 }; // 서울 시청
+
+// 내 위치 마커 아이콘 (빨간색)
+const USER_MARKER_IMAGE = new kakao.maps.MarkerImage(
+    "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png",
+    new kakao.maps.Size(64, 69),
+    { offset: new kakao.maps.Point(27, 69) }
+);
 
 // ========== DOM 요소 참조 ==========
 const onboardingPage = document.getElementById("onboarding-page");
@@ -11,6 +19,8 @@ const startButton = document.getElementById("start-button");
 const statusBar = document.getElementById("status-bar");
 const statusText = document.getElementById("status-text");
 const recenterButton = document.getElementById("recenter-button");
+const searchInput = document.getElementById("search-input");
+const searchButton = document.getElementById("search-button");
 
 // ========== 초기화 ==========
 window.addEventListener("load", () => {
@@ -54,14 +64,20 @@ function handleStart() {
         map = new kakao.maps.Map(container, options);
         console.log("지도 생성 완료 (fallback 좌표)");
 
-        currentMarker = new kakao.maps.Marker({ position: center });
+        currentMarker = new kakao.maps.Marker({
+            position: center,
+            image: USER_MARKER_IMAGE
+        });
         currentMarker.setMap(map);
-        console.log("기본 마커 생성 완료");
+        console.log("기본 마커 생성 완료 (빨간색)");
 
         // 지도가 hidden 상태에서 만들어졌을 수 있으니 레이아웃 재계산
         map.relayout();
         map.setCenter(center);
         console.log("지도 레이아웃 재계산 완료");
+
+        // 검색 기능 초기화
+        setupSearch();
 
         // 5) 로딩 페이지 숨기고 상태메시지 + 위치 요청
         loadingPage.classList.add("hidden");
@@ -153,11 +169,14 @@ function updateMapToCurrentPosition(lat, lng) {
         currentMarker.setMap(null);
     }
 
-    // 새 위치에 마커 생성
-    currentMarker = new kakao.maps.Marker({ position: newCenter });
+    // 새 위치에 마커 생성 (빨간색)
+    currentMarker = new kakao.maps.Marker({
+        position: newCenter,
+        image: USER_MARKER_IMAGE
+    });
     currentMarker.setMap(map);
 
-    console.log("마커 업데이트 완료");
+    console.log("마커 업데이트 완료 (빨간색)");
 }
 
 // ========== 상태 메시지 유틸리티 ==========
@@ -187,6 +206,74 @@ function handleRecenter() {
     const markerPosition = currentMarker.getPosition();
     map.setCenter(markerPosition);
     console.log("지도 중심을 마커 위치로 이동 완료");
+}
+
+// ========== 검색 기능 ==========
+function setupSearch() {
+    if (!searchInput || !searchButton) {
+        console.warn("검색 요소를 찾을 수 없습니다");
+        return;
+    }
+
+    const places = new kakao.maps.services.Places();
+
+    function doSearch() {
+        const keyword = searchInput.value.trim();
+        if (!keyword) {
+            showStatusMessage("검색어를 입력해 주세요.");
+            return;
+        }
+
+        console.log("장소 검색 시작:", keyword);
+
+        places.keywordSearch(keyword, function (result, status) {
+            if (status !== kakao.maps.services.Status.OK || !result.length) {
+                showStatusMessage("검색 결과를 찾지 못했어요.");
+                console.log("검색 실패:", status);
+                return;
+            }
+
+            const first = result[0];
+            const newPos = new kakao.maps.LatLng(first.y, first.x);
+
+            console.log("검색 결과:", first.place_name, first.y, first.x);
+
+            // 지도 중심 이동
+            map.setCenter(newPos);
+
+            // 기존 검색 마커 제거
+            if (searchMarker) {
+                searchMarker.setMap(null);
+            }
+
+            // 새 검색 마커 생성 (기본 마커)
+            searchMarker = new kakao.maps.Marker({
+                position: newPos
+            });
+            searchMarker.setMap(map);
+
+            showStatusMessage(`"${first.place_name}" 근처로 이동했어요.`);
+            console.log("검색 마커 생성 완료");
+
+            // 3초 후 상태 메시지 숨김
+            setTimeout(() => {
+                hideStatusMessage();
+            }, 3000);
+        });
+    }
+
+    // 검색 버튼 클릭 이벤트
+    searchButton.addEventListener("click", doSearch);
+
+    // 엔터 키 이벤트
+    searchInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            doSearch();
+        }
+    });
+
+    console.log("검색 기능 초기화 완료");
 }
 
 // ========== 리사이즈 대응 ==========
