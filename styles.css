@@ -645,8 +645,10 @@ main {
 
 /* ========== 시설 리스트 ========== */
 #facility-list {
-    flex: 1;
+    flex: 1 1 auto;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: auto;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -678,11 +680,18 @@ main {
     align-items: center;
     gap: 12px;
     transition: all 0.2s;
+    cursor: pointer;
 }
 
 .facility-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transform: translateY(-1px);
+}
+
+.facility-card.active {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    background: #eff6ff;
 }
 
 .facility-main {
@@ -700,8 +709,26 @@ main {
 
 .facility-meta {
     display: flex;
-    gap: 8px;
+    flex-direction: column;
+    gap: 4px;
     font-size: 12px;
+    color: #6b7280;
+}
+
+.facility-address {
+    font-size: 11px;
+    color: #9ca3af;
+    line-height: 1.4;
+}
+
+.facility-rating {
+    font-size: 12px;
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.facility-category {
+    font-size: 11px;
     color: #6b7280;
 }
 

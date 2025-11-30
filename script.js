@@ -46,6 +46,10 @@ let facilityMarkerImage; // 시설 마커 아이콘
 let searchResults = [];
 let searchResultsSheet;
 
+// ========== 필터 관리 ==========
+let activeFilters = new Set();
+let selectedRadius = 2; // 기본 2km
+
 // ========== 초기화 ==========
 window.addEventListener("load", () => {
     console.log("[DEBUG] script loaded");
@@ -352,6 +356,7 @@ function setupSearch() {
 function setupDrawerUI() {
     drawer = document.getElementById("drawer");
     drawerHandle = document.getElementById("drawer-handle");
+    const facilityList = document.getElementById("facility-list");
 
     if (!drawer || !drawerHandle) return;
 
@@ -371,6 +376,10 @@ function setupDrawerUI() {
 
     function onDragMove(event) {
         if (!isDragging) return;
+
+        // isDragging일 때만 preventDefault
+        event.preventDefault();
+
         const clientY = event.touches ? event.touches[0].clientY : event.clientY;
         const deltaY = startY - clientY; // 위로 드래그 = 양수
 
@@ -398,11 +407,19 @@ function setupDrawerUI() {
         }
     }
 
+    // handle에서만 드래그 시작
     drawerHandle.addEventListener("mousedown", onDragStart);
-    drawerHandle.addEventListener("touchstart", onDragStart);
+    drawerHandle.addEventListener("touchstart", onDragStart, { passive: true });
+
+    // facility-list에서는 스크롤만 되도록
+    if (facilityList) {
+        facilityList.addEventListener("touchstart", (e) => {
+            e.stopPropagation();
+        }, { passive: true });
+    }
 
     window.addEventListener("mousemove", onDragMove);
-    window.addEventListener("touchmove", onDragMove);
+    window.addEventListener("touchmove", onDragMove, { passive: false });
 
     window.addEventListener("mouseup", onDragEnd);
     window.addEventListener("touchend", onDragEnd);
@@ -421,9 +438,14 @@ function setupRadiusChips() {
             // 클릭한 칩에 active 추가
             chip.classList.add("active");
 
-            const radius = chip.getAttribute("data-radius");
+            const radius = parseInt(chip.getAttribute("data-radius"));
+            selectedRadius = radius;
+
             showStatusMessage(`반경 ${radius}km 내 시설을 보고 있어요.`);
             console.log("반경 칩 클릭:", radius + "km");
+
+            // 필터 재적용
+            applyFilters();
 
             // 3초 후 상태바 숨김
             setTimeout(() => {
@@ -448,12 +470,17 @@ function setupFilterChips() {
             const isActive = chip.classList.contains("active");
 
             if (isActive) {
+                activeFilters.add(filter);
                 showStatusMessage(`"${chip.textContent}" 필터를 적용했어요.`);
             } else {
+                activeFilters.delete(filter);
                 showStatusMessage(`"${chip.textContent}" 필터를 해제했어요.`);
             }
 
             console.log("필터 칩 클릭:", filter, isActive ? "활성화" : "비활성화");
+
+            // 필터 재적용
+            applyFilters();
 
             // 3초 후 상태바 숨김
             setTimeout(() => {
@@ -465,37 +492,41 @@ function setupFilterChips() {
     console.log("[DEBUG] 필터 칩 UI 초기화 완료");
 }
 
-// ========== 시설 카드 버튼 UI (더미) ==========
+// ========== 시설 카드 버튼 UI (이벤트 위임 방식) ==========
 function setupFacilityButtons() {
-    // 지도에서 보기 버튼
-    const mapButtons = document.querySelectorAll(".facility-map-button");
-    mapButtons.forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            const facilityName = e.target.closest(".facility-card").querySelector(".facility-name").textContent;
-            showStatusMessage(`"${facilityName}"를 지도에서 보여드릴게요.`);
-            console.log("지도에서 보기:", facilityName);
+    const facilityList = document.getElementById("facility-list");
+    if (!facilityList) return;
+
+    facilityList.addEventListener("click", (e) => {
+        const card = e.target.closest(".facility-card");
+        if (!card) return;
+
+        const facilityId = card.dataset.facilityId;
+        const facility = visibleFacilities.find(f => f.id.toString() === facilityId);
+        if (!facility) return;
+
+        if (e.target.classList.contains("facility-map-button")) {
+            // 지도에서 보기
+            const pos = new kakao.maps.LatLng(facility.lat, facility.lng);
+            map.setCenter(pos);
+            map.setLevel(3); // 줌인
+            highlightFacilityCard(facility.id);
+            showStatusMessage(`"${facility.name}"를 지도에서 보여드릴게요.`);
 
             setTimeout(() => {
                 hideStatusMessage();
             }, 2000);
-        });
+        } else if (e.target.classList.contains("facility-nav-button")) {
+            // 길찾기 (카카오맵 열기)
+            if (facility.url) {
+                window.open(facility.url, "_blank");
+            } else {
+                showStatusMessage("길찾기 정보를 찾을 수 없어요.");
+            }
+        }
     });
 
-    // 길찾기 버튼
-    const navButtons = document.querySelectorAll(".facility-nav-button");
-    navButtons.forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            const facilityName = e.target.closest(".facility-card").querySelector(".facility-name").textContent;
-            showStatusMessage(`"${facilityName}" 길찾기를 시작합니다.`);
-            console.log("길찾기:", facilityName);
-
-            setTimeout(() => {
-                hideStatusMessage();
-            }, 2000);
-        });
-    });
-
-    console.log("[DEBUG] 시설 카드 버튼 UI 초기화 완료");
+    console.log("[DEBUG] 시설 카드 버튼 UI 초기화 완료 (이벤트 위임)");
 }
 
 // ========== 추천 카드 자동 숨김 기능 ==========
@@ -559,23 +590,89 @@ window.addEventListener("resize", () => {
 
 // ========== 시설 데이터 초기화 ==========
 function initializeFacilities() {
-    // 더미 시설 데이터 (실제로는 API에서 가져올 데이터)
+    // 더미 시설 데이터 (실제로는 Kakao Places API에서 가져올 데이터)
     facilities = [
-        { id: 1, name: "동네 근린공원", lat: 37.5665, lng: 126.9790, type: "outdoor", isFree: true, isIndoor: false, isOpenNow: true, isCourse: false, distance: 350 },
-        { id: 2, name: "시립 체육관", lat: 37.5670, lng: 126.9785, type: "indoor", isFree: false, isIndoor: true, isOpenNow: true, isCourse: false, distance: 720 },
-        { id: 3, name: "올림픽 둘레길 5구간", lat: 37.5655, lng: 126.9795, type: "course", isFree: true, isIndoor: false, isOpenNow: true, isCourse: true, distance: 1200 },
-        { id: 4, name: "구립 수영장", lat: 37.5680, lng: 126.9775, type: "indoor", isFree: false, isIndoor: true, isOpenNow: false, isCourse: false, distance: 1500 },
-        { id: 5, name: "야외 농구장", lat: 37.5675, lng: 126.9800, type: "outdoor", isFree: true, isIndoor: false, isOpenNow: true, isCourse: false, distance: 850 }
+        {
+            id: 1,
+            name: "동네 근린공원",
+            lat: 37.5665,
+            lng: 126.9790,
+            type: "outdoor",
+            isFree: true,
+            isIndoor: false,
+            isOpenNow: true,
+            isCourse: false,
+            distance: 350,
+            address: "서울 중구 세종대로 110",
+            url: "https://map.kakao.com/link/map/동네 근린공원,37.5665,126.9790"
+        },
+        {
+            id: 2,
+            name: "시립 체육관",
+            lat: 37.5670,
+            lng: 126.9785,
+            type: "indoor",
+            isFree: false,
+            isIndoor: true,
+            isOpenNow: true,
+            isCourse: false,
+            distance: 720,
+            address: "서울 중구 태평로1가 31",
+            rating: "4.2",
+            url: "https://map.kakao.com/link/map/시립 체육관,37.5670,126.9785"
+        },
+        {
+            id: 3,
+            name: "올림픽 둘레길 5구간",
+            lat: 37.5655,
+            lng: 126.9795,
+            type: "course",
+            isFree: true,
+            isIndoor: false,
+            isOpenNow: true,
+            isCourse: true,
+            distance: 1200,
+            address: "서울 중구 정동길 일대",
+            url: "https://map.kakao.com/link/map/올림픽 둘레길 5구간,37.5655,126.9795"
+        },
+        {
+            id: 4,
+            name: "구립 수영장",
+            lat: 37.5680,
+            lng: 126.9775,
+            type: "indoor",
+            isFree: false,
+            isIndoor: true,
+            isOpenNow: false,
+            isCourse: false,
+            distance: 1500,
+            address: "서울 중구 서소문동 135",
+            rating: "3.8",
+            url: "https://map.kakao.com/link/map/구립 수영장,37.5680,126.9775"
+        },
+        {
+            id: 5,
+            name: "야외 농구장",
+            lat: 37.5675,
+            lng: 126.9800,
+            type: "outdoor",
+            isFree: true,
+            isIndoor: false,
+            isOpenNow: true,
+            isCourse: false,
+            distance: 850,
+            address: "서울 중구 소공동 87",
+            url: "https://map.kakao.com/link/map/야외 농구장,37.5675,126.9800"
+        }
     ];
 
     // 초기에는 모든 시설을 표시
     visibleFacilities = [...facilities];
 
-    // 시설 개수 업데이트
-    updateFacilityCount(visibleFacilities.length);
-
-    // 시설 마커 렌더링
+    // UI 업데이트
+    renderFacilityList(visibleFacilities);
     renderFacilityMarkers(visibleFacilities);
+    updateFacilityCount(visibleFacilities.length);
 
     console.log("[DEBUG] 시설 데이터 초기화 완료:", facilities.length, "개");
 }
@@ -605,10 +702,134 @@ function renderFacilityMarkers(facilitiesToShow) {
             title: facility.name
         });
         marker.setMap(map);
+
+        // 마커 클릭 이벤트: 해당 카드 강조
+        kakao.maps.event.addListener(marker, "click", () => {
+            highlightFacilityCard(facility.id);
+            map.setCenter(position);
+            map.setLevel(3); // 줌인
+            showStatusMessage(`"${facility.name}"를 선택했어요.`);
+            setTimeout(() => hideStatusMessage(), 2000);
+        });
+
         facilityMarkers.push(marker);
     });
 
     console.log("[DEBUG] 시설 마커 렌더링 완료:", facilityMarkers.length, "개");
+}
+
+// ========== 시설 리스트 렌더링 ==========
+function renderFacilityList(facilitiesToShow) {
+    const listEl = document.getElementById("facility-list");
+    if (!listEl) return;
+
+    // 기존 내용 제거
+    listEl.innerHTML = "";
+
+    // 시설이 없으면
+    if (facilitiesToShow.length === 0) {
+        listEl.innerHTML = '<div style="padding: 20px; text-align: center; color: #9ca3af;">조건에 맞는 시설이 없습니다.</div>';
+        return;
+    }
+
+    // 각 시설을 카드로 추가
+    facilitiesToShow.forEach((f) => {
+        const card = document.createElement("div");
+        card.className = "facility-card";
+        card.dataset.facilityId = f.id;
+
+        // 거리 표시 포맷
+        const distanceText = f.distance >= 1000 ? `${(f.distance / 1000).toFixed(1)}km` : `${f.distance}m`;
+
+        // 카테고리 표시
+        let categoryText = "";
+        if (f.isCourse) categoryText = "걷기코스";
+        else if (f.isIndoor) categoryText = "실내";
+        else categoryText = "실외";
+        categoryText += f.isFree ? " · 무료" : " · 유료";
+
+        card.innerHTML = `
+            <div class="facility-main">
+                <div class="facility-name">${f.name}</div>
+                <div class="facility-meta">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <span class="distance">${distanceText}</span>
+                        <span class="category">${categoryText}</span>
+                    </div>
+                    ${f.address ? `<div class="facility-address">${f.address}</div>` : ""}
+                    ${f.rating ? `<div class="facility-rating">⭐ ${f.rating}</div>` : ""}
+                </div>
+            </div>
+            <div class="facility-actions">
+                <button class="facility-map-button">지도에서 보기</button>
+                <button class="facility-nav-button">길찾기</button>
+            </div>
+        `;
+
+        listEl.appendChild(card);
+    });
+
+    console.log("[DEBUG] 시설 리스트 렌더링 완료:", facilitiesToShow.length, "개");
+}
+
+// ========== 시설 카드 강조 ==========
+function highlightFacilityCard(facilityId) {
+    const allCards = document.querySelectorAll(".facility-card");
+    allCards.forEach(card => card.classList.remove("active"));
+
+    const targetCard = document.querySelector(`.facility-card[data-facility-id="${facilityId}"]`);
+    if (targetCard) {
+        targetCard.classList.add("active");
+        targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
+        console.log("[DEBUG] 시설 카드 강조:", facilityId);
+    }
+}
+
+// ========== 필터 적용 ==========
+function applyFilters() {
+    if (!currentMarker) {
+        console.warn("[DEBUG] 현재 위치 마커가 없어 필터를 적용할 수 없습니다.");
+        return;
+    }
+
+    const userPos = currentMarker.getPosition();
+
+    // 거리 계산 함수 (Haversine formula, km 단위)
+    function calculateDistance(lat1, lng1, lat2, lng2) {
+        const R = 6371; // 지구 반지름 (km)
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLng/2) * Math.sin(dLng/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    // 필터 적용
+    visibleFacilities = facilities.filter((f) => {
+        // 1. 반경 필터
+        const distanceKm = calculateDistance(userPos.getLat(), userPos.getLng(), f.lat, f.lng);
+        if (distanceKm > selectedRadius) return false;
+
+        // 2. 속성 필터
+        for (const filter of activeFilters) {
+            if (filter === "free" && !f.isFree) return false;
+            if (filter === "indoor" && !f.isIndoor) return false;
+            if (filter === "outdoor" && !f.isIndoor && !f.isCourse) return true; // 실외는 실내도 코스도 아닌 것
+            if (filter === "course" && !f.isCourse) return false;
+            if (filter === "open_now" && !f.isOpenNow) return false;
+        }
+
+        return true;
+    });
+
+    // UI 업데이트
+    renderFacilityList(visibleFacilities);
+    renderFacilityMarkers(visibleFacilities);
+    updateFacilityCount(visibleFacilities.length);
+
+    console.log("[DEBUG] 필터 적용 완료:", visibleFacilities.length, "/", facilities.length, "개 표시");
 }
 
 // ========== 검색 결과 Sheet 초기화 ==========
