@@ -107,6 +107,12 @@ function handleStart() {
         // 검색 기능 초기화
         setupSearch();
 
+        // UI 초기화 (Drawer, 반경칩, 필터칩, 시설 버튼)
+        setupDrawerUI();
+        setupRadiusChips();
+        setupFilterChips();
+        setupFacilityButtons();
+
         // 5) 로딩 페이지 숨기고 상태메시지 + 위치 요청
         if (loadingPage) loadingPage.classList.add("hidden");
 
@@ -305,6 +311,112 @@ function setupSearch() {
     });
 
     console.log("검색 기능 초기화 완료");
+}
+
+// ========== Drawer UI 토글 ==========
+let drawer;
+let drawerHandle;
+
+function setupDrawerUI() {
+    drawer = document.getElementById("drawer");
+    drawerHandle = document.getElementById("drawer-handle");
+
+    if (drawerHandle && drawer) {
+        drawerHandle.addEventListener("click", () => {
+            drawer.classList.toggle("collapsed");
+            drawer.classList.toggle("expanded");
+            console.log("Drawer 토글:", drawer.classList.contains("expanded") ? "확장" : "축소");
+        });
+        console.log("[DEBUG] Drawer UI 초기화 완료");
+    }
+}
+
+// ========== 반경 칩 UI ==========
+function setupRadiusChips() {
+    const radiusChips = document.querySelectorAll(".radius-chip");
+
+    radiusChips.forEach(chip => {
+        chip.addEventListener("click", () => {
+            // 모든 칩에서 active 제거
+            radiusChips.forEach(c => c.classList.remove("active"));
+            // 클릭한 칩에 active 추가
+            chip.classList.add("active");
+
+            const radius = chip.getAttribute("data-radius");
+            showStatusMessage(`반경 ${radius}km 내 시설을 보고 있어요.`);
+            console.log("반경 칩 클릭:", radius + "km");
+
+            // 3초 후 상태바 숨김
+            setTimeout(() => {
+                hideStatusMessage();
+            }, 3000);
+        });
+    });
+
+    console.log("[DEBUG] 반경 칩 UI 초기화 완료");
+}
+
+// ========== 필터 칩 UI ==========
+function setupFilterChips() {
+    const filterChips = document.querySelectorAll("#drawer-filters .filter-chip");
+
+    filterChips.forEach(chip => {
+        chip.addEventListener("click", () => {
+            // active 토글
+            chip.classList.toggle("active");
+
+            const filter = chip.getAttribute("data-filter");
+            const isActive = chip.classList.contains("active");
+
+            if (isActive) {
+                showStatusMessage(`"${chip.textContent}" 필터를 적용했어요.`);
+            } else {
+                showStatusMessage(`"${chip.textContent}" 필터를 해제했어요.`);
+            }
+
+            console.log("필터 칩 클릭:", filter, isActive ? "활성화" : "비활성화");
+
+            // 3초 후 상태바 숨김
+            setTimeout(() => {
+                hideStatusMessage();
+            }, 3000);
+        });
+    });
+
+    console.log("[DEBUG] 필터 칩 UI 초기화 완료");
+}
+
+// ========== 시설 카드 버튼 UI (더미) ==========
+function setupFacilityButtons() {
+    // 지도에서 보기 버튼
+    const mapButtons = document.querySelectorAll(".facility-map-button");
+    mapButtons.forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const facilityName = e.target.closest(".facility-card").querySelector(".facility-name").textContent;
+            showStatusMessage(`"${facilityName}"를 지도에서 보여드릴게요.`);
+            console.log("지도에서 보기:", facilityName);
+
+            setTimeout(() => {
+                hideStatusMessage();
+            }, 2000);
+        });
+    });
+
+    // 길찾기 버튼
+    const navButtons = document.querySelectorAll(".facility-nav-button");
+    navButtons.forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const facilityName = e.target.closest(".facility-card").querySelector(".facility-name").textContent;
+            showStatusMessage(`"${facilityName}" 길찾기를 시작합니다.`);
+            console.log("길찾기:", facilityName);
+
+            setTimeout(() => {
+                hideStatusMessage();
+            }, 2000);
+        });
+    });
+
+    console.log("[DEBUG] 시설 카드 버튼 UI 초기화 완료");
 }
 
 // ========== 리사이즈 대응 ==========

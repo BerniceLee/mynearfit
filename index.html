@@ -46,42 +46,136 @@
         </header>
 
         <main>
-            <section id="top-panel">
-                <div class="page-heading">
-                    <h2>근린핏</h2>
-                    <p>근처의 운동시설을 한눈에 확인해보세요.</p>
-                </div>
-                <div class="location-summary">
-                    <span class="label">현재 기준</span>
-                    <span class="value" id="location-label">내 주변 2km 운동시설</span>
-                </div>
-                <div class="control-row">
-                    <div class="radius-chip">
-                        반경 <strong>2km</strong>
+            <!-- 지도 영역 -->
+            <div id="map-area">
+                <div id="map-wrapper">
+                    <div id="map"></div>
+
+                    <!-- 지도 위 검색 바 -->
+                    <div id="map-search">
+                        <input id="search-input" type="text" placeholder="주소나 장소를 검색하세요">
+                        <button id="search-button">검색</button>
                     </div>
-                    <div class="filter-chips">
-                        <button class="filter-chip" data-filter="all">전체</button>
-                        <button class="filter-chip" data-filter="free">무료시설</button>
-                        <button class="filter-chip" data-filter="indoor">실내</button>
-                        <button class="filter-chip" data-filter="outdoor">실외</button>
-                        <button class="filter-chip" data-filter="course">걷기코스</button>
+
+                    <!-- 내 위치로 다시 보기 버튼 -->
+                    <button id="recenter-button">내 위치로<br>다시 보기</button>
+                </div>
+            </div>
+
+            <!-- 추천 카드 영역 -->
+            <section id="recommend-section">
+                <div class="recommend-card">
+                    <h3>🚶 지금 바로 걷기 좋은 코스</h3>
+                    <p>내 위치에서 가까운 걷기 코스를 추천드려요.</p>
+                </div>
+                <div class="recommend-card secondary">
+                    <h3>🏃 무료로 이용 가능한 운동시설</h3>
+                    <p>근처에서 바로 사용할 수 있는 무료 운동시설을 확인해보세요.</p>
+                </div>
+            </section>
+
+            <!-- 하단 Drawer -->
+            <section id="drawer" class="collapsed">
+                <div id="drawer-handle"></div>
+
+                <div id="drawer-header">
+                    <div class="drawer-title">
+                        📍 내 주변 운동시설 <span id="facility-count">12곳</span>
+                    </div>
+                    <div class="radius-chips">
+                        <button class="radius-chip" data-radius="1">1km</button>
+                        <button class="radius-chip active" data-radius="2">2km</button>
+                        <button class="radius-chip" data-radius="3">3km</button>
+                    </div>
+                </div>
+
+                <div id="drawer-filters">
+                    <button class="filter-chip" data-filter="free">무료 시설</button>
+                    <button class="filter-chip" data-filter="indoor">실내 운동</button>
+                    <button class="filter-chip" data-filter="outdoor">실외 운동</button>
+                    <button class="filter-chip" data-filter="course">걷기 코스</button>
+                    <button class="filter-chip" data-filter="open_now">현재 운영 중</button>
+                </div>
+
+                <div id="facility-list">
+                    <!-- 더미 시설 카드 1 -->
+                    <div class="facility-card">
+                        <div class="facility-main">
+                            <div class="facility-name">동네 근린공원</div>
+                            <div class="facility-meta">
+                                <span>거리 350m</span>
+                                <span>실외 · 무료</span>
+                            </div>
+                        </div>
+                        <div class="facility-actions">
+                            <button class="facility-map-button">지도에서 보기</button>
+                            <button class="facility-nav-button">길찾기</button>
+                        </div>
+                    </div>
+
+                    <!-- 더미 시설 카드 2 -->
+                    <div class="facility-card">
+                        <div class="facility-main">
+                            <div class="facility-name">시립 체육관</div>
+                            <div class="facility-meta">
+                                <span>거리 720m</span>
+                                <span>실내 · 유료</span>
+                            </div>
+                        </div>
+                        <div class="facility-actions">
+                            <button class="facility-map-button">지도에서 보기</button>
+                            <button class="facility-nav-button">길찾기</button>
+                        </div>
+                    </div>
+
+                    <!-- 더미 시설 카드 3 -->
+                    <div class="facility-card">
+                        <div class="facility-main">
+                            <div class="facility-name">올림픽 둘레길 5구간</div>
+                            <div class="facility-meta">
+                                <span>거리 1.2km</span>
+                                <span>걷기코스 · 무료</span>
+                            </div>
+                        </div>
+                        <div class="facility-actions">
+                            <button class="facility-map-button">지도에서 보기</button>
+                            <button class="facility-nav-button">길찾기</button>
+                        </div>
+                    </div>
+
+                    <!-- 더미 시설 카드 4 -->
+                    <div class="facility-card">
+                        <div class="facility-main">
+                            <div class="facility-name">구립 수영장</div>
+                            <div class="facility-meta">
+                                <span>거리 1.5km</span>
+                                <span>실내 · 유료</span>
+                            </div>
+                        </div>
+                        <div class="facility-actions">
+                            <button class="facility-map-button">지도에서 보기</button>
+                            <button class="facility-nav-button">길찾기</button>
+                        </div>
+                    </div>
+
+                    <!-- 더미 시설 카드 5 -->
+                    <div class="facility-card">
+                        <div class="facility-main">
+                            <div class="facility-name">야외 농구장</div>
+                            <div class="facility-meta">
+                                <span>거리 850m</span>
+                                <span>실외 · 무료</span>
+                            </div>
+                        </div>
+                        <div class="facility-actions">
+                            <button class="facility-map-button">지도에서 보기</button>
+                            <button class="facility-nav-button">길찾기</button>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <div id="map-wrapper">
-                <div id="map"></div>
-
-                <!-- 지도 위 검색 바 -->
-                <div id="map-search">
-                    <input id="search-input" type="text" placeholder="주소나 장소를 검색하세요">
-                    <button id="search-button">검색</button>
-                </div>
-
-                <!-- 내 위치로 다시 보기 버튼 -->
-                <button id="recenter-button">내 위치로<br>다시 보기</button>
-            </div>
-
+            <!-- 상태바 -->
             <div id="status-bar" class="hidden">
                 <span id="status-text"></span>
             </div>

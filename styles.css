@@ -197,101 +197,21 @@ main {
     flex: 1;
     display: flex;
     flex-direction: column;
+    position: relative;
+    overflow: hidden;
 }
 
-#top-panel {
-    padding: 8px 12px 4px;
-    background: #020617;
-    border-bottom: 1px solid #111827;
-}
-
-.page-heading {
-    margin-bottom: 8px;
-}
-
-.page-heading h2 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #f9fafb;
-}
-
-.page-heading p {
-    margin: 2px 0 0;
-    font-size: 12px;
-    color: #9ca3af;
-}
-
-.location-summary {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
-    font-size: 12px;
-}
-
-.location-summary .label {
-    padding: 2px 6px;
-    border-radius: 999px;
-    background: #111827;
-    color: #9ca3af;
-    font-size: 11px;
-}
-
-.location-summary .value {
-    color: #e5e7eb;
-}
-
-.control-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-bottom: 4px;
-}
-
-.radius-chip {
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: #111827;
-    font-size: 12px;
-    color: #e5e7eb;
-    flex-shrink: 0;
-}
-
-.filter-chips {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.filter-chips::-webkit-scrollbar {
-    display: none;
-}
-
-.filter-chip {
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid #1f2937;
-    background: #020617;
-    color: #e5e7eb;
-    font-size: 12px;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.filter-chip:hover {
-    background: #111827;
-}
-
-.filter-chip:active {
-    opacity: 0.7;
+/* ========== 지도 영역 ========== */
+#map-area {
+    flex: 0 0 50%;
+    min-height: 200px;
+    position: relative;
 }
 
 #map-wrapper {
-    flex: 1;
     position: relative;
+    width: 100%;
+    height: 100%;
     background: #000;
 }
 
@@ -368,13 +288,270 @@ main {
     opacity: 0.6;
 }
 
-#status-bar {
+/* ========== 추천 카드 영역 ========== */
+#recommend-section {
     flex: 0 0 auto;
+    padding: 8px 12px;
+    background: #020617;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.recommend-card {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    font-size: 12px;
+}
+
+.recommend-card h3 {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #f9fafb;
+}
+
+.recommend-card p {
+    margin: 0;
+    color: #cbd5e1;
+    line-height: 1.4;
+}
+
+.recommend-card.secondary {
+    background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* ========== 하단 Drawer ========== */
+#drawer {
+    position: relative;
+    flex: 1;
+    background: #020617;
+    border-top: 1px solid #111827;
+    padding: 6px 12px 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+#drawer.collapsed {
+    max-height: 40%;
+}
+
+#drawer.expanded {
+    max-height: 75%;
+}
+
+#drawer-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: #374151;
+    align-self: center;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#drawer-handle:hover {
+    background: #4b5563;
+}
+
+#drawer-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.drawer-title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#facility-count {
+    font-weight: 700;
+    color: #22c55e;
+}
+
+.radius-chips {
+    display: flex;
+    gap: 6px;
+}
+
+.radius-chip {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+    background: #020617;
+    font-size: 11px;
+    color: #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.radius-chip:hover {
+    background: #111827;
+}
+
+.radius-chip.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #f9fafb;
+}
+
+/* ========== 필터 칩 영역 ========== */
+#drawer-filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+}
+
+#drawer-filters::-webkit-scrollbar {
+    display: none;
+}
+
+#drawer-filters .filter-chip {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+    background: #020617;
+    font-size: 11px;
+    color: #e5e7eb;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#drawer-filters .filter-chip:hover {
+    background: #111827;
+}
+
+#drawer-filters .filter-chip.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #f9fafb;
+}
+
+/* ========== 시설 리스트 ========== */
+#facility-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 4px;
+}
+
+#facility-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+#facility-list::-webkit-scrollbar-track {
+    background: #111827;
+    border-radius: 999px;
+}
+
+#facility-list::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 999px;
+}
+
+.facility-card {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #0b1120;
+    border: 1px solid #1f2937;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.facility-card:hover {
+    background: #111827;
+}
+
+.facility-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+}
+
+.facility-name {
+    font-weight: 600;
+    color: #f9fafb;
+}
+
+.facility-meta {
+    display: flex;
+    gap: 6px;
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.facility-meta span:not(:last-child)::after {
+    content: "·";
+    margin-left: 6px;
+}
+
+.facility-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.facility-map-button,
+.facility-nav-button {
+    border: none;
+    border-radius: 8px;
+    padding: 5px 8px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+
+.facility-map-button {
+    background: #111827;
+    color: #e5e7eb;
+}
+
+.facility-map-button:active {
+    opacity: 0.7;
+}
+
+.facility-nav-button {
+    background: #2563eb;
+    color: #f9fafb;
+}
+
+.facility-nav-button:active {
+    opacity: 0.7;
+}
+
+/* ========== 상태바 ========== */
+#status-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
     padding: 6px 12px;
     font-size: 12px;
-    background: #020617;
+    background: rgba(2, 6, 23, 0.95);
     color: #9ca3af;
     border-top: 1px solid #111827;
+    z-index: 100;
 }
 
 #status-bar.hidden {
@@ -404,14 +581,18 @@ main {
     #app-page {
         max-width: 480px;
         width: 100%;
-        height: 85vh;
+        height: 90vh;
         margin: 0 auto;
-        border-radius: 16px;
+        border-radius: 20px;
         overflow: hidden;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
     }
 
     header {
-        border-radius: 16px 16px 0 0;
+        border-radius: 20px 20px 0 0;
+    }
+
+    #map-area {
+        flex: 0 0 45%;
     }
 }
