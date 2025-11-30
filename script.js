@@ -90,14 +90,34 @@ window.addEventListener("load", () => {
     }
 });
 
+// ========== 페이지 전환 유틸리티 (스크롤 리셋 포함) ==========
+function showPage(page) {
+    const pages = [onboardingPage, loadingPage, appPage];
+    pages.forEach(p => {
+        if (!p) return;
+        p.classList.add("hidden");
+        p.scrollTop = 0;
+    });
+
+    // 브라우저 전체 스크롤도 항상 맨 위로
+    window.scrollTo(0, 0);
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+
+    if (page) {
+        page.classList.remove("hidden");
+    }
+
+    console.log("[DEBUG] Page transition:", page ? page.id : "none");
+}
+
 // ========== 시작 버튼 클릭 핸들러 ==========
 function handleStart() {
     console.log("[DEBUG] handleStart called");
     console.log("시작 버튼 클릭됨 - 로딩 페이지로 전환");
 
-    // 1) 온보딩 숨기기, 로딩 페이지 표시
-    if (onboardingPage) onboardingPage.classList.add("hidden");
-    if (loadingPage) loadingPage.classList.remove("hidden");
+    // 1) 온보딩 → 로딩 전환 + 스크롤 리셋
+    showPage(loadingPage);
 
     // 2) 즉시 위치 권한 요청 (버튼 클릭 체인 안에서)
     requestCurrentPosition();
@@ -155,9 +175,6 @@ function requestCurrentPosition() {
 function initMapWithPosition(lat, lng) {
     console.log("지도 초기화 시작 (사용자 위치):", lat, lng);
 
-    // 메인 페이지 표시 (지도 div 크기 확보)
-    if (appPage) appPage.classList.remove("hidden");
-
     // Kakao 지도 SDK 로드 및 초기화
     kakao.maps.load(function () {
         console.log("카카오맵 SDK 로드 완료");
@@ -203,8 +220,8 @@ function initMapWithPosition(lat, lng) {
         setupSearchResultsSheet();
         initializeFacilities();
 
-        // 로딩 페이지 숨기기
-        if (loadingPage) loadingPage.classList.add("hidden");
+        // 로딩 → 메인 전환 + 스크롤 맨 위
+        showPage(appPage);
 
         // 지도 레이아웃 재계산
         setTimeout(() => {
@@ -327,48 +344,34 @@ function setupDrawerUI() {
 
     drawer.style.height = drawerMinHeight + "px";
 
-    function getClientY(e) {
-        return e.touches ? e.touches[0].clientY : e.clientY;
-    }
+    const getClientY = (e) => (e.touches ? e.touches[0].clientY : e.clientY);
 
-    function onDragStart(e) {
+    const onDragStart = (e) => {
         isDragging = true;
         startY = getClientY(e);
         startHeight = drawer.offsetHeight;
         drawer.style.transition = "none";
         e.preventDefault();
-    }
+    };
 
-    function onDragMove(e) {
+    const onDragMove = (e) => {
         if (!isDragging) return;
         const currentY = getClientY(e);
         const deltaY = startY - currentY; // 위로 드래그 = 양수
         let newHeight = startHeight + deltaY;
-
         if (newHeight < drawerMinHeight) newHeight = drawerMinHeight;
         if (newHeight > drawerMaxHeight) newHeight = drawerMaxHeight;
-
         drawer.style.height = newHeight + "px";
-    }
+    };
 
-    function onDragEnd() {
+    const onDragEnd = () => {
         if (!isDragging) return;
         isDragging = false;
         drawer.style.transition = "height 0.2s ease-out";
-
         const currentHeight = drawer.offsetHeight;
         const middle = (drawerMinHeight + drawerMaxHeight) / 2;
-
-        if (currentHeight < middle) {
-            drawer.style.height = drawerMinHeight + "px";
-            drawer.classList.add("collapsed");
-            drawer.classList.remove("expanded");
-        } else {
-            drawer.style.height = drawerMaxHeight + "px";
-            drawer.classList.add("expanded");
-            drawer.classList.remove("collapsed");
-        }
-    }
+        drawer.style.height = currentHeight < middle ? drawerMinHeight + "px" : drawerMaxHeight + "px";
+    };
 
     drawerHandle.addEventListener("mousedown", onDragStart);
     drawerHandle.addEventListener("touchstart", onDragStart);
@@ -379,7 +382,6 @@ function setupDrawerUI() {
     window.addEventListener("mouseup", onDragEnd);
     window.addEventListener("touchend", onDragEnd);
 
-    // facility-list 안에서의 스크롤은 막지 않도록 전파만 막기
     if (facilityList) {
         facilityList.addEventListener("touchstart", (e) => e.stopPropagation());
         facilityList.addEventListener("mousedown", (e) => e.stopPropagation());
