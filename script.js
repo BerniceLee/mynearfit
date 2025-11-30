@@ -41,6 +41,7 @@ let facilities = []; // 전체 시설 데이터
 let visibleFacilities = []; // 현재 필터링된 시설
 let facilityMarkers = []; // 지도에 표시된 시설 마커들
 let facilityMarkerImage; // 시설 마커 아이콘
+let userPosition = null; // 사용자 현재 위치 { lat, lng }
 
 // ========== 검색 결과 관리 ==========
 let searchResults = [];
@@ -160,7 +161,13 @@ function requestCurrentPosition() {
                     console.error("UNKNOWN ERROR:", error);
             }
 
+            // Fallback 지도 초기화
             initMapWithFallback();
+
+            // 상단 alert 배너 표시 (3초)
+            setTimeout(() => {
+                showTopAlert("현재 위치를 알 수 없어요. 우측 하단의 '현재 위치' 버튼을 눌러서 다시 조회해 주세요.", 3000);
+            }, 500);
         },
         // 옵션
         {
@@ -174,6 +181,9 @@ function requestCurrentPosition() {
 // ========== 지도 초기화 (사용자 위치 기준) ==========
 function initMapWithPosition(lat, lng) {
     console.log("지도 초기화 시작 (사용자 위치):", lat, lng);
+
+    // 사용자 위치 저장 (거리 계산용)
+    userPosition = { lat, lng };
 
     // Kakao 지도 SDK 로드 및 초기화
     kakao.maps.load(function () {
@@ -259,6 +269,25 @@ function hideStatusMessage() {
     console.log("상태 메시지 숨김");
 }
 
+// ========== 상단 alert 배너 유틸리티 ==========
+let topAlertTimeoutId = null;
+
+function showTopAlert(message, durationMs = 3000) {
+    const el = document.getElementById("top-alert");
+    const msgEl = document.getElementById("top-alert-message");
+    if (!el || !msgEl) return;
+
+    msgEl.textContent = message;
+    el.classList.remove("hidden");
+
+    if (topAlertTimeoutId) {
+        clearTimeout(topAlertTimeoutId);
+    }
+    topAlertTimeoutId = setTimeout(() => {
+        el.classList.add("hidden");
+    }, durationMs);
+}
+
 // ========== 내 위치로 다시 보기 버튼 핸들러 ==========
 function handleRecenter() {
     console.log("내 위치로 다시 보기 버튼 클릭");
@@ -336,6 +365,60 @@ function updateMapLayout() {
     const center = map.getCenter();
     map.relayout();
     map.setCenter(center);
+}
+
+// ========== Drawer 축소 함수 ==========
+function collapseDrawer() {
+    if (!drawer) {
+        drawer = document.getElementById("drawer");
+    }
+    if (!drawer || !drawerMinHeight) return;
+
+    drawer.style.transition = "height 0.2s ease-out";
+    drawer.style.height = drawerMinHeight + "px";
+
+    // 맵 레이아웃 보정
+    setTimeout(() => {
+        updateMapLayout();
+    }, 200);
+}
+
+// ========== 거리 계산 함수 (Haversine formula, 미터 단위) ==========
+function computeDistanceMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000; // 지구 반지름 (m)
+    const toRad = (v) => (v * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) *
+            Math.cos(toRad(lat2)) *
+            Math.sin(dLng / 2) *
+            Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c);
+}
+
+// ========== 시설 리스트를 거리순으로 정렬 ==========
+function sortFacilitiesByDistance(list) {
+    if (!list || list.length === 0) return [];
+
+    return list
+        .map((f) => {
+            let d = f.distance;
+            // distance가 없으면 userPosition 기준으로 계산
+            if ((d == null || d === undefined) && userPosition) {
+                d = computeDistanceMeters(
+                    userPosition.lat,
+                    userPosition.lng,
+                    f.lat,
+                    f.lng
+                );
+            }
+            // distance를 시설 객체에 업데이트
+            return { ...f, distance: Number(d) || 99999999 };
+        })
+        .sort((a, b) => a.distance - b.distance);
 }
 
 // ========== Drawer UI 드래그 가능 Bottom Sheet ==========
@@ -491,6 +574,9 @@ function setupFacilityButtons() {
             map.setLevel(3); // 줌인
             highlightFacilityCard(facility.id);
             showStatusMessage(`"${facility.name}"를 지도에서 보여드릴게요.`);
+
+            // Drawer를 축소 상태로 내려줌
+            collapseDrawer();
 
             setTimeout(() => {
                 hideStatusMessage();
@@ -795,6 +881,9 @@ function applyFilters() {
 
         return true;
     });
+
+    // 거리순으로 정렬 (가까운 순)
+    visibleFacilities = sortFacilitiesByDistance(visibleFacilities);
 
     // UI 업데이트
     renderFacilityList(visibleFacilities);
