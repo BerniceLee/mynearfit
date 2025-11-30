@@ -1,61 +1,89 @@
+// 버튼이 안 눌리던 문제: kakao 객체 사용 위치 정리 + 이벤트 바인딩 확인
+// - 전역에서 kakao.* API 호출 제거
+// - 모든 Kakao 관련 객체는 kakao.maps.load 콜백 내부에서만 생성
+// - 이벤트 바인딩을 확실하게 window.load 시점에 실행
+
 // ========== 전역 변수 및 상수 ==========
 let map;
 let currentMarker; // 내 위치 마커 (빨간색)
 let searchMarker;  // 검색 결과 마커
+let placesService; // Kakao Places 서비스
+let userMarkerImage; // 내 위치 마커 아이콘 (kakao.maps.load 안에서 생성)
+
 const FALLBACK_COORDS = { lat: 37.5665, lng: 126.9780 }; // 서울 시청
 
-// 내 위치 마커 아이콘 (빨간색)
-const USER_MARKER_IMAGE = new kakao.maps.MarkerImage(
-    "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png",
-    new kakao.maps.Size(64, 69),
-    { offset: new kakao.maps.Point(27, 69) }
-);
-
-// ========== DOM 요소 참조 ==========
-const onboardingPage = document.getElementById("onboarding-page");
-const loadingPage = document.getElementById("loading-page");
-const appPage = document.getElementById("app-page");
-const startButton = document.getElementById("start-button");
-const statusBar = document.getElementById("status-bar");
-const statusText = document.getElementById("status-text");
-const recenterButton = document.getElementById("recenter-button");
-const searchInput = document.getElementById("search-input");
-const searchButton = document.getElementById("search-button");
+// ========== DOM 요소 참조 (전역) ==========
+let onboardingPage;
+let loadingPage;
+let appPage;
+let startButton;
+let statusBar;
+let statusText;
+let recenterButton;
+let searchInput;
+let searchButton;
 
 // ========== 초기화 ==========
 window.addEventListener("load", () => {
-    console.log("페이지 로드 완료 - 온보딩 화면만 표시");
+    console.log("[DEBUG] script loaded");
+
+    // DOM 요소 참조
+    onboardingPage = document.getElementById("onboarding-page");
+    loadingPage = document.getElementById("loading-page");
+    appPage = document.getElementById("app-page");
+    startButton = document.getElementById("start-button");
+    statusBar = document.getElementById("status-bar");
+    statusText = document.getElementById("status-text");
+    recenterButton = document.getElementById("recenter-button");
+    searchInput = document.getElementById("search-input");
+    searchButton = document.getElementById("search-button");
+
+    console.log("[DEBUG] startButton:", !!startButton);
+    console.log("[DEBUG] recenterButton:", !!recenterButton);
 
     // 이벤트 리스너 등록
     if (startButton) {
         startButton.addEventListener("click", handleStart);
+        console.log("[DEBUG] startButton 이벤트 등록 완료");
+    } else {
+        console.error("[ERROR] startButton을 찾을 수 없습니다");
     }
 
     if (recenterButton) {
         recenterButton.addEventListener("click", handleRecenter);
+        console.log("[DEBUG] recenterButton 이벤트 등록 완료");
     }
 });
 
 // ========== 시작 버튼 클릭 핸들러 ==========
 function handleStart() {
+    console.log("[DEBUG] handleStart called");
     console.log("시작 버튼 클릭됨 - 로딩 페이지로 전환");
 
-    const onboardingPage = document.getElementById("onboarding-page");
-    const loadingPage = document.getElementById("loading-page");
-    const appPage = document.getElementById("app-page");
-
     // 1) 온보딩 숨기기
-    onboardingPage.classList.add("hidden");
+    if (onboardingPage) onboardingPage.classList.add("hidden");
 
     // 2) 메인 페이지는 미리 보이게 (지도 div 크기 확보)
-    appPage.classList.remove("hidden");
+    if (appPage) appPage.classList.remove("hidden");
 
     // 3) 로딩 페이지를 위에 띄우기
-    loadingPage.classList.remove("hidden");
+    if (loadingPage) loadingPage.classList.remove("hidden");
 
-    // 4) Kakao 지도 생성
+    // 4) Kakao 지도 생성 (여기서부터 kakao 객체 사용 가능)
     kakao.maps.load(function () {
         console.log("카카오맵 SDK 로드 완료");
+
+        // 내 위치 마커 아이콘 생성 (빨간색)
+        userMarkerImage = new kakao.maps.MarkerImage(
+            "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png",
+            new kakao.maps.Size(64, 69),
+            { offset: new kakao.maps.Point(27, 69) }
+        );
+        console.log("빨간 마커 이미지 생성 완료");
+
+        // Places 서비스 초기화
+        placesService = new kakao.maps.services.Places();
+        console.log("Places 서비스 초기화 완료");
 
         const container = document.getElementById("map");
         const center = new kakao.maps.LatLng(FALLBACK_COORDS.lat, FALLBACK_COORDS.lng);
@@ -66,7 +94,7 @@ function handleStart() {
 
         currentMarker = new kakao.maps.Marker({
             position: center,
-            image: USER_MARKER_IMAGE
+            image: userMarkerImage
         });
         currentMarker.setMap(map);
         console.log("기본 마커 생성 완료 (빨간색)");
@@ -80,7 +108,7 @@ function handleStart() {
         setupSearch();
 
         // 5) 로딩 페이지 숨기고 상태메시지 + 위치 요청
-        loadingPage.classList.add("hidden");
+        if (loadingPage) loadingPage.classList.add("hidden");
 
         showStatusMessage("현재 위치를 불러오는 중입니다...");
         requestCurrentPosition();
@@ -172,7 +200,7 @@ function updateMapToCurrentPosition(lat, lng) {
     // 새 위치에 마커 생성 (빨간색)
     currentMarker = new kakao.maps.Marker({
         position: newCenter,
-        image: USER_MARKER_IMAGE
+        image: userMarkerImage
     });
     currentMarker.setMap(map);
 
@@ -215,7 +243,10 @@ function setupSearch() {
         return;
     }
 
-    const places = new kakao.maps.services.Places();
+    if (!placesService) {
+        console.error("Places 서비스가 초기화되지 않았습니다");
+        return;
+    }
 
     function doSearch() {
         const keyword = searchInput.value.trim();
@@ -226,7 +257,7 @@ function setupSearch() {
 
         console.log("장소 검색 시작:", keyword);
 
-        places.keywordSearch(keyword, function (result, status) {
+        placesService.keywordSearch(keyword, function (result, status) {
             if (status !== kakao.maps.services.Status.OK || !result.length) {
                 showStatusMessage("검색 결과를 찾지 못했어요.");
                 console.log("검색 실패:", status);
