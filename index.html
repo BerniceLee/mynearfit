@@ -7,19 +7,24 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- 1) 권한 안내 + 시작 버튼 화면 -->
-    <div id="permission-screen">
-        <div class="permission-content">
-            <h1>MyNearFit</h1>
-            <p>현재 위치를 기반으로 근처 운동 시설을 찾아드립니다.</p>
+    <!-- 1. 온보딩 페이지 -->
+    <div id="onboarding-page">
+        <div class="onboarding-card">
+            <h1 class="service-title">MyNearFit</h1>
+            <p class="service-subtitle">
+                현재 위치를 기반으로 근처 운동 시설을 찾아드립니다.
+            </p>
+
             <button id="start-button">내 위치로 시작하기</button>
-            <small>버튼을 누르면 브라우저에서 위치 권한을 요청합니다.</small>
+            <small class="permission-note">
+                버튼을 누르면 브라우저에서 위치 권한을 요청합니다.
+            </small>
         </div>
     </div>
 
-    <!-- 2) 전체 로딩 페이지 (풀스크린, 프로그레스 바) -->
-    <div id="loading-screen" class="hidden">
-        <div class="loading-page">
+    <!-- 2. 로딩 페이지 (풀스크린) -->
+    <div id="loading-page" class="hidden">
+        <div class="loading-content">
             <h1 class="loading-title">로딩중입니다!</h1>
             <p class="loading-subtitle">내 주변 운동시설을 불러오는 중입니다.</p>
             <div class="progress-bar">
@@ -28,20 +33,49 @@
         </div>
     </div>
 
-    <!-- 3) 실제 앱 메인 화면 -->
-    <div id="app" class="hidden">
-        <header>MyNearFit</header>
+    <!-- 3. 메인 페이지 -->
+    <div id="app-page" class="hidden">
+        <header>
+            <div class="header-left">
+                <span class="logo-dot"></span>
+                <span class="header-title">MyNearFit</span>
+            </div>
+            <div class="header-right">
+                <span class="header-tagline">내 근처 운동 한눈에</span>
+            </div>
+        </header>
+
         <main>
-            <!-- 지도 영역 -->
-            <div id="map"></div>
-            <!-- 위치/상태 메시지 영역 -->
+            <section id="top-panel">
+                <div class="location-summary">
+                    <span class="label">현재 기준</span>
+                    <span class="value" id="location-label">내 주변 2km 운동시설</span>
+                </div>
+                <div class="control-row">
+                    <div class="radius-chip">
+                        반경 <strong>2km</strong>
+                    </div>
+                    <div class="filter-chips">
+                        <button class="filter-chip" data-filter="all">전체</button>
+                        <button class="filter-chip" data-filter="free">무료시설</button>
+                        <button class="filter-chip" data-filter="indoor">실내</button>
+                        <button class="filter-chip" data-filter="outdoor">실외</button>
+                        <button class="filter-chip" data-filter="course">걷기코스</button>
+                    </div>
+                </div>
+            </section>
+
+            <div id="map-wrapper">
+                <div id="map"></div>
+                <button id="recenter-button">내 위치로<br>다시 보기</button>
+            </div>
+
             <div id="status-bar" class="hidden">
                 <span id="status-text"></span>
             </div>
         </main>
     </div>
 
-    <!-- Kakao Maps SDK + 앱 스크립트 -->
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=bee6691adaec64b4b2374bfb592e9376&autoload=false"></script>
     <script src="script.js"></script>
 </body>

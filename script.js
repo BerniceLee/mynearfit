@@ -3,42 +3,38 @@ let map;
 let currentMarker;
 const FALLBACK_COORDS = { lat: 37.5665, lng: 126.9780 }; // 서울 시청
 
-// ========== DOM 요소 참조 (페이지 로드 후 초기화) ==========
-let permissionScreen;
-let loadingScreen;
-let app;
-let startButton;
-let statusBar;
-let statusText;
+// ========== DOM 요소 참조 ==========
+const onboardingPage = document.getElementById("onboarding-page");
+const loadingPage = document.getElementById("loading-page");
+const appPage = document.getElementById("app-page");
+const startButton = document.getElementById("start-button");
+const statusBar = document.getElementById("status-bar");
+const statusText = document.getElementById("status-text");
+const recenterButton = document.getElementById("recenter-button");
 
 // ========== 초기화 ==========
 window.addEventListener("load", () => {
-    // DOM 요소 참조 초기화
-    permissionScreen = document.getElementById("permission-screen");
-    loadingScreen = document.getElementById("loading-screen");
-    app = document.getElementById("app");
-    startButton = document.getElementById("start-button");
-    statusBar = document.getElementById("status-bar");
-    statusText = document.getElementById("status-text");
+    console.log("페이지 로드 완료 - 온보딩 화면만 표시");
 
-    // 오직 "내 위치로 시작하기" 버튼 이벤트만 연결
+    // 이벤트 리스너 등록
     if (startButton) {
         startButton.addEventListener("click", handleStart);
     }
 
-    // 초기 상태 확인 (디버깅용)
-    console.log("페이지 로드 완료 - 온보딩 화면만 표시");
+    if (recenterButton) {
+        recenterButton.addEventListener("click", handleRecenter);
+    }
 });
 
 // ========== 시작 버튼 클릭 핸들러 ==========
 function handleStart() {
-    console.log("시작 버튼 클릭됨");
+    console.log("시작 버튼 클릭됨 - 로딩 페이지로 전환");
 
-    // 1) 권한 안내 화면 숨기고 로딩 화면 표시
-    if (permissionScreen) permissionScreen.classList.add("hidden");
-    if (loadingScreen) loadingScreen.classList.remove("hidden");
+    // 1) 온보딩 페이지 숨기고 로딩 페이지 표시
+    if (onboardingPage) onboardingPage.classList.add("hidden");
+    if (loadingPage) loadingPage.classList.remove("hidden");
 
-    // 2) kakao.maps.load 내부에서 fallback 좌표로 지도를 먼저 생성
+    // 2) Kakao Maps SDK 로드 및 지도 초기화
     kakao.maps.load(function () {
         console.log("카카오맵 SDK 로드 완료");
 
@@ -48,25 +44,23 @@ function handleStart() {
             level: 4
         };
 
-        // 지도 생성 (fallback 위치 기준)
+        // fallback 좌표로 지도 생성
         map = new kakao.maps.Map(container, options);
         console.log("지도 생성 완료 (fallback 좌표)");
 
-        // fallback 위치에 기본 마커
-        const fallbackPosition = new kakao.maps.LatLng(FALLBACK_COORDS.lat, FALLBACK_COORDS.lng);
-        currentMarker = new kakao.maps.Marker({ position: fallbackPosition });
+        // fallback 위치에 마커 생성
+        const fallbackPos = new kakao.maps.LatLng(FALLBACK_COORDS.lat, FALLBACK_COORDS.lng);
+        currentMarker = new kakao.maps.Marker({ position: fallbackPos });
         currentMarker.setMap(map);
         console.log("기본 마커 생성 완료");
 
-        // 3) 지도 준비 완료 → 로딩 화면 숨기고 앱 화면 표시
-        if (loadingScreen) loadingScreen.classList.add("hidden");
-        if (app) app.classList.remove("hidden");
+        // 3) 지도 준비 완료 → 로딩 페이지 숨기고 메인 페이지 표시
+        if (loadingPage) loadingPage.classList.add("hidden");
+        if (appPage) appPage.classList.remove("hidden");
         console.log("메인 앱 화면 표시 완료");
 
-        // 4) 상태 메시지 표시
+        // 4) 상태 메시지 표시 및 현재 위치 요청
         showStatusMessage("현재 위치를 불러오는 중입니다...");
-
-        // 5) 이제 비동기로 현재 위치 요청
         requestCurrentPosition();
     });
 }
@@ -77,7 +71,7 @@ function requestCurrentPosition() {
 
     if (!navigator.geolocation) {
         console.warn("Geolocation not supported");
-        showStatusMessage("현재 위치를 가져오지 못해 기본 위치로 지도를 보여드리고 있어요.");
+        showStatusMessage("현재 위치를 가져올 수 없어 기본 위치로 지도를 보여드리고 있어요. 잠시 후 다시 접속해 주세요.");
         return;
     }
 
@@ -121,7 +115,7 @@ function requestCurrentPosition() {
             }
 
             // 사용자에게는 간단한 메시지만 표시
-            showStatusMessage("현재 위치를 가져오지 못해 기본 위치로 지도를 보여드리고 있어요. 잠시 후 다시 접속해 주세요.");
+            showStatusMessage("현재 위치를 가져올 수 없어 기본 위치로 지도를 보여드리고 있어요. 잠시 후 다시 접속해 주세요.");
 
             // 5초 후 상태 메시지 자동 숨김
             setTimeout(() => {
@@ -174,6 +168,21 @@ function hideStatusMessage() {
     console.log("상태 메시지 숨김");
 }
 
+// ========== 내 위치로 다시 보기 버튼 핸들러 ==========
+function handleRecenter() {
+    console.log("내 위치로 다시 보기 버튼 클릭");
+
+    if (!map || !currentMarker) {
+        console.warn("지도 또는 마커가 없습니다");
+        return;
+    }
+
+    // 현재 마커 위치로 지도 중심 이동
+    const markerPosition = currentMarker.getPosition();
+    map.setCenter(markerPosition);
+    console.log("지도 중심을 마커 위치로 이동 완료");
+}
+
 // ========== 리사이즈 대응 ==========
 window.addEventListener("resize", () => {
     if (map && currentMarker) {
@@ -182,73 +191,3 @@ window.addEventListener("resize", () => {
         console.log("지도 리사이즈 완료");
     }
 });
-
-// ========== TODO: 향후 구현 예정 ==========
-
-/**
- * 주변 시설 데이터 가져오기
- * TODO: 실제 API 엔드포인트 연결 필요
- */
-/*
-async function fetchNearbyFacilities(latitude, longitude) {
-    try {
-        const response = await fetch(`/api/facilities?lat=${latitude}&lng=${longitude}&radius=1000`);
-        const data = await response.json();
-        displayFacilities(data);
-    } catch (error) {
-        console.error('시설 데이터 로딩 실패:', error);
-        showStatusMessage('주변 시설 정보를 불러오는데 실패했습니다.');
-    }
-}
-*/
-
-/**
- * 시설 정보를 지도에 마커로 표시
- * TODO: 시설 데이터 배열을 받아서 마커 생성
- */
-/*
-function displayFacilities(facilities) {
-    facilities.forEach(facility => {
-        const position = new kakao.maps.LatLng(facility.latitude, facility.longitude);
-        const marker = new kakao.maps.Marker({
-            position: position,
-            map: map
-        });
-
-        // 마커 클릭 이벤트
-        kakao.maps.event.addListener(marker, 'click', () => {
-            showFacilityInfo(facility);
-        });
-    });
-}
-*/
-
-/**
- * 시설 상세 정보 인포윈도우 표시
- * TODO: 인포윈도우 또는 사이드 패널 구현
- */
-/*
-function showFacilityInfo(facility) {
-    const content = `
-        <div style="padding:10px; min-width:200px;">
-            <h3 style="margin:0 0 10px 0; font-size:16px;">${facility.name}</h3>
-            <p style="margin:0; font-size:13px; color:#666;">${facility.address}</p>
-            <p style="margin:5px 0 0 0; font-size:12px; color:#999;">거리: ${facility.distance}m</p>
-        </div>
-    `;
-
-    const infowindow = new kakao.maps.InfoWindow({
-        content: content
-    });
-
-    infowindow.open(map, marker);
-}
-*/
-
-// TODO: 추가 기능
-// - 검색 기능 (주소, 시설명)
-// - 필터링 (시설 종류별: 헬스장, 수영장, 공원 등)
-// - 경로 안내 (현재 위치 → 선택한 시설)
-// - 즐겨찾기 (로컬 스토리지 활용)
-// - 리스트 뷰 / 맵 뷰 전환
-// - 현재 위치 재탐색 버튼
