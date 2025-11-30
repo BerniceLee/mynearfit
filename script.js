@@ -330,13 +330,21 @@ function setupSearch() {
     console.log("검색 기능 초기화 완료");
 }
 
+// ========== Map Layout 업데이트 함수 ==========
+function updateMapLayout() {
+    if (!map) return;
+    const center = map.getCenter();
+    map.relayout();
+    map.setCenter(center);
+}
+
 // ========== Drawer UI 드래그 가능 Bottom Sheet ==========
 function setupDrawerUI() {
     drawer = document.getElementById("drawer");
-    drawerHandle = document.getElementById("drawer-handle");
+    const drawerGrabArea = document.getElementById("drawer-grab-area");
     const facilityList = document.getElementById("facility-list");
 
-    if (!drawer || !drawerHandle) return;
+    if (!drawer || !drawerGrabArea) return;
 
     const vh = document.documentElement.clientHeight; // 모바일에서도 안정적
     drawerMinHeight = vh * 0.30; // 30vh
@@ -365,6 +373,7 @@ function setupDrawerUI() {
         if (newHeight < drawerMinHeight) newHeight = drawerMinHeight;
         if (newHeight > drawerMaxHeight) newHeight = drawerMaxHeight;
         drawer.style.height = newHeight + "px";
+        updateMapLayout(); // 드래그 중 지도 레이아웃 업데이트
         e.preventDefault();
     }
 
@@ -375,15 +384,16 @@ function setupDrawerUI() {
         const currentHeight = drawer.offsetHeight;
         const middle = (drawerMinHeight + drawerMaxHeight) / 2;
         drawer.style.height = currentHeight < middle ? drawerMinHeight + "px" : drawerMaxHeight + "px";
+        updateMapLayout(); // 드래그 종료 후 지도 레이아웃 업데이트
     }
 
     // 마우스 이벤트
-    drawerHandle.addEventListener("mousedown", onDragStart);
+    drawerGrabArea.addEventListener("mousedown", onDragStart);
     window.addEventListener("mousemove", onDragMove);
     window.addEventListener("mouseup", onDragEnd);
 
     // 터치 이벤트 (passive:false로 등록)
-    drawerHandle.addEventListener("touchstart", onDragStart, { passive: false });
+    drawerGrabArea.addEventListener("touchstart", onDragStart, { passive: false });
     window.addEventListener("touchmove", onDragMove, { passive: false });
     window.addEventListener("touchend", onDragEnd);
 
