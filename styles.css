@@ -7,34 +7,49 @@
 
 html,
 body {
+    width: 100vw;
+    height: 100vh;
     margin: 0;
     padding: 0;
-    height: 100%;
+    overflow: hidden;
     font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", sans-serif;
     background: #ffffff;
     color: #111827;
 }
 
-/* ========== 공통 유틸리티 ========== */
-.hidden {
-    display: none;
+/* 모바일 100vh 이슈 해결용 */
+html {
+    height: calc(var(--vh, 1vh) * 100);
 }
 
-/* 브랜드 그라데이션 */
+body {
+    height: calc(var(--vh, 1vh) * 100);
+}
+
+/* ========== 브랜드 그라데이션 ========== */
 :root {
     --gradient-brand: linear-gradient(90deg, #3b82f6 0%, #22c55e 100%);
 }
 
+/* ========== 공통 유틸리티 ========== */
+.hidden {
+    display: none !important;
+}
+
 /* ========== 온보딩 페이지 ========== */
 #onboarding-page {
-    position: fixed;
-    inset: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 40px 24px 32px;
     background: #ffffff;
     text-align: center;
+}
+
+#onboarding-page.hidden {
+    display: none;
 }
 
 .onboarding-top {
@@ -138,8 +153,8 @@ body {
 
 /* ========== 로딩 페이지 ========== */
 #loading-page {
-    position: fixed;
-    inset: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -275,9 +290,10 @@ body {
 
 /* ========== 메인 페이지 ========== */
 #app-page {
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    height: 100vh;
     background: #f8fafc;
     color: #111827;
 }
@@ -421,6 +437,7 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
 }
 
 #recenter-button:hover {
@@ -753,6 +770,25 @@ main {
 
 /* ========== 데스크톱 반응형 ========== */
 @media (min-width: 768px) {
+    body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f3f4f6;
+    }
+
+    #onboarding-page,
+    #loading-page,
+    #app-page {
+        max-width: 480px;
+        width: 100%;
+        height: 90vh;
+        margin: 0 auto;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+    }
+
     #onboarding-page {
         padding: 60px 40px 48px;
     }
@@ -778,16 +814,6 @@ main {
     #start-button {
         font-size: 17px;
         padding: 18px 28px;
-    }
-
-    #app-page {
-        max-width: 480px;
-        width: 100%;
-        height: 90vh;
-        margin: 0 auto;
-        border-radius: 24px;
-        overflow: hidden;
-        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
     }
 
     header {

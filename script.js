@@ -27,6 +27,14 @@ let searchButton;
 window.addEventListener("load", () => {
     console.log("[DEBUG] script loaded");
 
+    // 모바일 100vh 이슈 해결
+    function updateVh() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    updateVh();
+    window.addEventListener('resize', updateVh);
+
     // DOM 요소 참조
     onboardingPage = document.getElementById("onboarding-page");
     loadingPage = document.getElementById("loading-page");
