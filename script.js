@@ -95,84 +95,12 @@ function handleStart() {
     console.log("[DEBUG] handleStart called");
     console.log("시작 버튼 클릭됨 - 로딩 페이지로 전환");
 
-    // 1) 온보딩 숨기기
+    // 1) 온보딩 숨기기, 로딩 페이지 표시
     if (onboardingPage) onboardingPage.classList.add("hidden");
-
-    // 2) 메인 페이지는 미리 보이게 (지도 div 크기 확보)
-    if (appPage) appPage.classList.remove("hidden");
-
-    // 3) 로딩 페이지를 위에 띄우기
     if (loadingPage) loadingPage.classList.remove("hidden");
 
-    // 4) Kakao 지도 생성 (여기서부터 kakao 객체 사용 가능)
-    kakao.maps.load(function () {
-        console.log("카카오맵 SDK 로드 완료");
-
-        // 내 위치 마커 아이콘 생성 (빨간색, 크기 축소)
-        userMarkerImage = new kakao.maps.MarkerImage(
-            "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png",
-            new kakao.maps.Size(32, 36),
-            { offset: new kakao.maps.Point(16, 36) }
-        );
-        console.log("빨간 마커 이미지 생성 완료");
-
-        // 시설 마커 아이콘 생성 (별 모양, 작은 크기)
-        facilityMarkerImage = new kakao.maps.MarkerImage(
-            "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png",
-            new kakao.maps.Size(24, 35),
-            { offset: new kakao.maps.Point(12, 35) }
-        );
-        console.log("시설 마커 이미지 생성 완료");
-
-        // Places 서비스 초기화
-        placesService = new kakao.maps.services.Places();
-        console.log("Places 서비스 초기화 완료");
-
-        const container = document.getElementById("map");
-        const center = new kakao.maps.LatLng(FALLBACK_COORDS.lat, FALLBACK_COORDS.lng);
-        const options = { center, level: 4 };
-
-        map = new kakao.maps.Map(container, options);
-        console.log("지도 생성 완료 (fallback 좌표)");
-
-        currentMarker = new kakao.maps.Marker({
-            position: center,
-            image: userMarkerImage
-        });
-        currentMarker.setMap(map);
-        console.log("기본 마커 생성 완료 (빨간색)");
-
-        // 검색 기능 초기화
-        setupSearch();
-
-        // UI 초기화 (Drawer, 반경칩, 필터칩, 시설 버튼)
-        setupDrawerUI();
-        setupRadiusChips();
-        setupFilterChips();
-        setupFacilityButtons();
-
-        // 검색 결과 sheet 초기화
-        setupSearchResultsSheet();
-
-        // 더미 시설 데이터 초기화 (실제로는 API에서 가져올 데이터)
-        initializeFacilities();
-
-        // 5) 로딩 페이지 숨기고 상태메시지 + 위치 요청
-        if (loadingPage) loadingPage.classList.add("hidden");
-
-        // 지도 레이아웃 재계산 (모든 UI가 준비된 후)
-        setTimeout(() => {
-            map.relayout();
-            map.setCenter(center);
-            console.log("지도 레이아웃 재계산 완료");
-        }, 100);
-
-        showStatusMessage("현재 위치를 불러오는 중입니다...");
-        requestCurrentPosition();
-
-        // 6) 추천 카드 자동 숨김 타이머 시작
-        startRecommendHideTimer();
-    });
+    // 2) 즉시 위치 권한 요청 (버튼 클릭 체인 안에서)
+    requestCurrentPosition();
 }
 
 // ========== Geolocation 요청 함수 ==========
@@ -181,7 +109,7 @@ function requestCurrentPosition() {
 
     if (!navigator.geolocation) {
         console.warn("Geolocation not supported");
-        showStatusMessage("현재 위치를 가져올 수 없어 기본 위치로 지도를 보여드리고 있어요. 잠시 후 다시 접속해 주세요.");
+        initMapWithFallback();
         return;
     }
 
@@ -190,26 +118,14 @@ function requestCurrentPosition() {
         (position) => {
             const { latitude, longitude } = position.coords;
             console.log("위치 정보 획득 성공:", latitude, longitude);
-
-            // 지도 중심을 현재 위치로 이동
-            updateMapToCurrentPosition(latitude, longitude);
-
-            // 상태 메시지 업데이트
-            showStatusMessage("현재 위치 기준으로 지도를 보여드리고 있어요.");
-
-            // 3초 후 상태 메시지 자동 숨김
-            setTimeout(() => {
-                hideStatusMessage();
-            }, 3000);
+            initMapWithPosition(latitude, longitude);
         },
         // 실패 콜백
         (error) => {
-            // 콘솔에만 상세 에러 로그 출력
             console.error("Geolocation error:", error);
             console.error("Error code:", error.code);
             console.error("Error message:", error.message);
 
-            // 에러 타입별 콘솔 로그
             switch (error.code) {
                 case error.PERMISSION_DENIED:
                     console.error("PERMISSION_DENIED: 사용자가 위치 권한을 거부했습니다.");
@@ -224,47 +140,92 @@ function requestCurrentPosition() {
                     console.error("UNKNOWN ERROR:", error);
             }
 
-            // 사용자에게는 간단한 메시지만 표시
-            showStatusMessage("현재 위치를 가져올 수 없어 기본 위치로 지도를 보여드리고 있어요. 잠시 후 다시 접속해 주세요.");
-
-            // 5초 후 상태 메시지 자동 숨김
-            setTimeout(() => {
-                hideStatusMessage();
-            }, 5000);
+            initMapWithFallback();
         },
-        // 옵션 (속도 개선을 위해 완화)
+        // 옵션
         {
-            enableHighAccuracy: false, // GPS 사용 안 함 (빠른 응답)
-            timeout: 5000, // 5초 타임아웃
-            maximumAge: 60000 // 1분 이내 캐시 허용
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
         }
     );
 }
 
-// ========== 지도 업데이트 함수 ==========
-function updateMapToCurrentPosition(lat, lng) {
-    console.log("지도 중심 업데이트:", lat, lng);
+// ========== 지도 초기화 (사용자 위치 기준) ==========
+function initMapWithPosition(lat, lng) {
+    console.log("지도 초기화 시작 (사용자 위치):", lat, lng);
 
-    if (!map) return;
+    // 메인 페이지 표시 (지도 div 크기 확보)
+    if (appPage) appPage.classList.remove("hidden");
 
-    const newCenter = new kakao.maps.LatLng(lat, lng);
+    // Kakao 지도 SDK 로드 및 초기화
+    kakao.maps.load(function () {
+        console.log("카카오맵 SDK 로드 완료");
 
-    // 지도 중심 이동
-    map.setCenter(newCenter);
+        // 마커 아이콘 생성
+        userMarkerImage = new kakao.maps.MarkerImage(
+            "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png",
+            new kakao.maps.Size(32, 36),
+            { offset: new kakao.maps.Point(16, 36) }
+        );
 
-    // 기존 마커 제거
-    if (currentMarker) {
-        currentMarker.setMap(null);
-    }
+        facilityMarkerImage = new kakao.maps.MarkerImage(
+            "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png",
+            new kakao.maps.Size(24, 35),
+            { offset: new kakao.maps.Point(12, 35) }
+        );
 
-    // 새 위치에 마커 생성 (빨간색)
-    currentMarker = new kakao.maps.Marker({
-        position: newCenter,
-        image: userMarkerImage
+        // Places 서비스 초기화
+        placesService = new kakao.maps.services.Places();
+
+        // 지도 생성
+        const container = document.getElementById("map");
+        const center = new kakao.maps.LatLng(lat, lng);
+        const options = { center, level: 4 };
+
+        map = new kakao.maps.Map(container, options);
+        console.log("지도 생성 완료 (사용자 위치)");
+
+        // 현재 위치 마커 생성
+        currentMarker = new kakao.maps.Marker({
+            position: center,
+            image: userMarkerImage
+        });
+        currentMarker.setMap(map);
+        console.log("현재 위치 마커 생성 완료");
+
+        // UI 초기화
+        setupSearch();
+        setupDrawerUI();
+        setupRadiusChips();
+        setupFilterChips();
+        setupFacilityButtons();
+        setupSearchResultsSheet();
+        initializeFacilities();
+
+        // 로딩 페이지 숨기기
+        if (loadingPage) loadingPage.classList.add("hidden");
+
+        // 지도 레이아웃 재계산
+        setTimeout(() => {
+            map.relayout();
+            map.setCenter(center);
+            console.log("지도 레이아웃 재계산 완료");
+        }, 100);
+
+        showStatusMessage("현재 위치 기준으로 지도를 보여드리고 있어요.");
+        setTimeout(() => hideStatusMessage(), 3000);
+
+        // 추천 카드 자동 숨김 타이머 시작
+        startRecommendHideTimer();
     });
-    currentMarker.setMap(map);
+}
 
-    console.log("마커 업데이트 완료 (빨간색)");
+// ========== 지도 초기화 (Fallback 좌표) ==========
+function initMapWithFallback() {
+    console.log("지도 초기화 시작 (fallback 좌표)");
+    showStatusMessage("위치를 가져올 수 없어 기본 위치로 보여드릴게요.");
+    initMapWithPosition(FALLBACK_COORDS.lat, FALLBACK_COORDS.lng);
 }
 
 // ========== 상태 메시지 유틸리티 ==========
@@ -365,26 +326,28 @@ function setupDrawerUI() {
     drawerMaxHeight = vh * 0.80; // 80vh
 
     drawer.style.height = drawerMinHeight + "px";
-    drawer.classList.add("collapsed");
 
-    function onDragStart(event) {
-        isDragging = true;
-        startY = event.touches ? event.touches[0].clientY : event.clientY;
-        startHeight = drawer.offsetHeight;
-        drawer.style.transition = "none";
+    function getClientY(e) {
+        return e.touches ? e.touches[0].clientY : e.clientY;
     }
 
-    function onDragMove(event) {
+    function onDragStart(e) {
+        isDragging = true;
+        startY = getClientY(e);
+        startHeight = drawer.offsetHeight;
+        drawer.style.transition = "none";
+        e.preventDefault();
+    }
+
+    function onDragMove(e) {
         if (!isDragging) return;
-
-        // isDragging일 때만 preventDefault
-        event.preventDefault();
-
-        const clientY = event.touches ? event.touches[0].clientY : event.clientY;
-        const deltaY = startY - clientY; // 위로 드래그 = 양수
-
+        const currentY = getClientY(e);
+        const deltaY = startY - currentY; // 위로 드래그 = 양수
         let newHeight = startHeight + deltaY;
-        newHeight = Math.max(drawerMinHeight, Math.min(drawerMaxHeight, newHeight));
+
+        if (newHeight < drawerMinHeight) newHeight = drawerMinHeight;
+        if (newHeight > drawerMaxHeight) newHeight = drawerMaxHeight;
+
         drawer.style.height = newHeight + "px";
     }
 
@@ -407,22 +370,20 @@ function setupDrawerUI() {
         }
     }
 
-    // handle에서만 드래그 시작
     drawerHandle.addEventListener("mousedown", onDragStart);
-    drawerHandle.addEventListener("touchstart", onDragStart, { passive: true });
-
-    // facility-list에서는 스크롤만 되도록
-    if (facilityList) {
-        facilityList.addEventListener("touchstart", (e) => {
-            e.stopPropagation();
-        }, { passive: true });
-    }
+    drawerHandle.addEventListener("touchstart", onDragStart);
 
     window.addEventListener("mousemove", onDragMove);
     window.addEventListener("touchmove", onDragMove, { passive: false });
 
     window.addEventListener("mouseup", onDragEnd);
     window.addEventListener("touchend", onDragEnd);
+
+    // facility-list 안에서의 스크롤은 막지 않도록 전파만 막기
+    if (facilityList) {
+        facilityList.addEventListener("touchstart", (e) => e.stopPropagation());
+        facilityList.addEventListener("mousedown", (e) => e.stopPropagation());
+    }
 
     console.log("[DEBUG] Drawer UI 드래그 기능 초기화 완료");
 }
