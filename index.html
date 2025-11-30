@@ -13,7 +13,14 @@
 <body>
     <!-- 1. 온보딩 페이지 -->
     <div id="onboarding-page">
-        <div class="onboarding-top">
+        <div class="onboarding-header">
+            <h1 class="service-title">근린핏</h1>
+            <p class="service-subtitle">
+                내 주변 운동시설을<br>한눈에 확인해보세요!
+            </p>
+        </div>
+
+        <div class="onboarding-hero">
             <div class="onboarding-illustration">
                 <!-- 3D 일러스트 (undraw 스타일) -->
                 <svg width="240" height="180" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -29,23 +36,17 @@
                     </defs>
                 </svg>
             </div>
-        </div>
-
-        <div class="onboarding-content">
-            <h1 class="service-title">근린핏</h1>
-            <p class="service-subtitle">
-                내 주변 운동시설을<br>한눈에 확인해보세요!
-            </p>
             <p class="service-description">
                 걷기 좋은 코스부터 무료 운동시설까지<br>
                 가까운 곳의 건강한 공간을 찾아드려요
             </p>
+        </div>
 
+        <div class="onboarding-actions">
             <button id="start-button">
                 <span>내 위치로 시작하기</span>
                 <span class="button-icon">→</span>
             </button>
-
             <small class="permission-note">
                 위치 권한을 허용하면 더 정확한 정보를 제공해드려요
             </small>
@@ -161,81 +162,11 @@
                     <button class="filter-chip" data-filter="open_now">⏰ 운영 중</button>
                 </div>
 
+                <div id="facility-empty" class="facility-empty hidden">
+                    내 주변에 표시할 운동시설이 없습니다.
+                </div>
                 <div id="facility-list">
-                    <!-- 더미 시설 카드 1 -->
-                    <div class="facility-card">
-                        <div class="facility-main">
-                            <div class="facility-name">동네 근린공원</div>
-                            <div class="facility-meta">
-                                <span class="distance">350m</span>
-                                <span class="category">실외 · 무료</span>
-                            </div>
-                        </div>
-                        <div class="facility-actions">
-                            <button class="facility-map-button">지도</button>
-                            <button class="facility-nav-button">길찾기</button>
-                        </div>
-                    </div>
-
-                    <!-- 더미 시설 카드 2 -->
-                    <div class="facility-card">
-                        <div class="facility-main">
-                            <div class="facility-name">시립 체육관</div>
-                            <div class="facility-meta">
-                                <span class="distance">720m</span>
-                                <span class="category">실내 · 유료</span>
-                            </div>
-                        </div>
-                        <div class="facility-actions">
-                            <button class="facility-map-button">지도</button>
-                            <button class="facility-nav-button">길찾기</button>
-                        </div>
-                    </div>
-
-                    <!-- 더미 시설 카드 3 -->
-                    <div class="facility-card">
-                        <div class="facility-main">
-                            <div class="facility-name">올림픽 둘레길 5구간</div>
-                            <div class="facility-meta">
-                                <span class="distance">1.2km</span>
-                                <span class="category">걷기코스 · 무료</span>
-                            </div>
-                        </div>
-                        <div class="facility-actions">
-                            <button class="facility-map-button">지도</button>
-                            <button class="facility-nav-button">길찾기</button>
-                        </div>
-                    </div>
-
-                    <!-- 더미 시설 카드 4 -->
-                    <div class="facility-card">
-                        <div class="facility-main">
-                            <div class="facility-name">구립 수영장</div>
-                            <div class="facility-meta">
-                                <span class="distance">1.5km</span>
-                                <span class="category">실내 · 유료</span>
-                            </div>
-                        </div>
-                        <div class="facility-actions">
-                            <button class="facility-map-button">지도</button>
-                            <button class="facility-nav-button">길찾기</button>
-                        </div>
-                    </div>
-
-                    <!-- 더미 시설 카드 5 -->
-                    <div class="facility-card">
-                        <div class="facility-main">
-                            <div class="facility-name">야외 농구장</div>
-                            <div class="facility-meta">
-                                <span class="distance">850m</span>
-                                <span class="category">실외 · 무료</span>
-                            </div>
-                        </div>
-                        <div class="facility-actions">
-                            <button class="facility-map-button">지도</button>
-                            <button class="facility-nav-button">길찾기</button>
-                        </div>
-                    </div>
+                    <!-- 동적으로 생성됨 -->
                 </div>
             </section>
 

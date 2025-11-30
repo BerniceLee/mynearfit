@@ -32,7 +32,6 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     padding: 40px 24px 32px;
     background: #ffffff;
     text-align: center;
@@ -44,43 +43,54 @@ body {
     display: none;
 }
 
-.onboarding-top {
+/* 상단: 타이틀/설명 */
+.onboarding-header {
+    flex: 0 0 auto;
+    margin-top: 8px;
+}
+
+/* 가운데: 아이콘/그래픽 */
+.onboarding-hero {
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 32px;
+    justify-content: center;
 }
 
 .onboarding-illustration {
-    margin-top: 20px;
+    width: 200px;
+    max-width: 60vw;
+    margin: 0 auto;
 }
 
-/* 모바일에서 온보딩 여백 줄이기 (버튼이 스크롤 없이 보이도록) */
+.onboarding-illustration svg {
+    width: 100%;
+    height: auto;
+}
+
+/* 하단: 버튼 영역 - 항상 아래쪽에 */
+.onboarding-actions {
+    flex: 0 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 모바일 전용 튜닝 (스크롤 없이 버튼 중앙 하단에) */
 @media (max-width: 768px) {
     #onboarding-page {
-        padding: 16px 20px;
-        justify-content: space-between;
+        padding: 12px 20px;
     }
 
-    .onboarding-top {
-        gap: 16px;
-        margin-top: 8px;
+    .onboarding-header {
+        margin-top: 4px;
     }
 
     .onboarding-illustration {
-        margin-top: 4px;
-        width: 160px;
-        max-width: 55vw;
-    }
-
-    .onboarding-illustration svg {
-        width: 100%;
-        height: auto;
-    }
-
-    .onboarding-content {
-        gap: 12px;
-        margin-top: 8px;
+        width: 150px;
+        max-width: 50vw;
     }
 
     .service-title {
@@ -95,24 +105,23 @@ body {
 
     .service-description {
         font-size: 13px;
-        margin-bottom: 4px;
+        margin-top: 8px;
+        margin-bottom: 0;
+    }
+
+    .onboarding-actions {
+        margin-top: 8px;
+        margin-bottom: 8px;
     }
 
     #start-button {
-        margin-top: 8px;
-        margin-bottom: 12px;
+        margin: 0;
     }
 
     .permission-note {
         margin-top: 4px;
         font-size: 11px;
     }
-}
-
-.onboarding-content {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
 }
 
 .service-title {
@@ -695,6 +704,13 @@ main {
 }
 
 /* ========== 시설 리스트 ========== */
+.facility-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
+}
+
 #facility-list {
     flex: 1 1 auto;
     overflow-y: auto;

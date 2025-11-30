@@ -338,7 +338,7 @@ function setupDrawerUI() {
 
     if (!drawer || !drawerHandle) return;
 
-    const vh = window.innerHeight;
+    const vh = document.documentElement.clientHeight; // 모바일에서도 안정적
     drawerMinHeight = vh * 0.30; // 30vh
     drawerMaxHeight = vh * 0.80; // 80vh
 
@@ -558,91 +558,73 @@ window.addEventListener("resize", () => {
 
 // ========== 시설 데이터 초기화 ==========
 function initializeFacilities() {
-    // 더미 시설 데이터 (실제로는 Kakao Places API에서 가져올 데이터)
-    facilities = [
-        {
-            id: 1,
-            name: "동네 근린공원",
-            lat: 37.5665,
-            lng: 126.9790,
-            type: "outdoor",
-            isFree: true,
-            isIndoor: false,
-            isOpenNow: true,
-            isCourse: false,
-            distance: 350,
-            address: "서울 중구 세종대로 110",
-            url: "https://map.kakao.com/link/map/동네 근린공원,37.5665,126.9790"
-        },
-        {
-            id: 2,
-            name: "시립 체육관",
-            lat: 37.5670,
-            lng: 126.9785,
-            type: "indoor",
-            isFree: false,
-            isIndoor: true,
-            isOpenNow: true,
-            isCourse: false,
-            distance: 720,
-            address: "서울 중구 태평로1가 31",
-            rating: "4.2",
-            url: "https://map.kakao.com/link/map/시립 체육관,37.5670,126.9785"
-        },
-        {
-            id: 3,
-            name: "올림픽 둘레길 5구간",
-            lat: 37.5655,
-            lng: 126.9795,
-            type: "course",
-            isFree: true,
-            isIndoor: false,
-            isOpenNow: true,
-            isCourse: true,
-            distance: 1200,
-            address: "서울 중구 정동길 일대",
-            url: "https://map.kakao.com/link/map/올림픽 둘레길 5구간,37.5655,126.9795"
-        },
-        {
-            id: 4,
-            name: "구립 수영장",
-            lat: 37.5680,
-            lng: 126.9775,
-            type: "indoor",
-            isFree: false,
-            isIndoor: true,
-            isOpenNow: false,
-            isCourse: false,
-            distance: 1500,
-            address: "서울 중구 서소문동 135",
-            rating: "3.8",
-            url: "https://map.kakao.com/link/map/구립 수영장,37.5680,126.9775"
-        },
-        {
-            id: 5,
-            name: "야외 농구장",
-            lat: 37.5675,
-            lng: 126.9800,
-            type: "outdoor",
-            isFree: true,
-            isIndoor: false,
-            isOpenNow: true,
-            isCourse: false,
-            distance: 850,
-            address: "서울 중구 소공동 87",
-            url: "https://map.kakao.com/link/map/야외 농구장,37.5675,126.9800"
-        }
-    ];
+    // 현재 지도 중심 기준으로 운동시설 검색
+    if (!map || !currentMarker) {
+        console.warn("[DEBUG] 지도 또는 마커가 준비되지 않음");
+        return;
+    }
 
-    // 초기에는 모든 시설을 표시
-    visibleFacilities = [...facilities];
+    const centerLatLng = currentMarker.getPosition();
+    fetchNearbyFacilities(centerLatLng, selectedRadius * 1000); // km → m
+}
 
-    // UI 업데이트
-    renderFacilityList(visibleFacilities);
-    renderFacilityMarkers(visibleFacilities);
-    updateFacilityCount(visibleFacilities.length);
+// ========== 현재 위치 기준 운동시설 검색 (Kakao Places API) ==========
+function fetchNearbyFacilities(centerLatLng, radiusMeters) {
+    if (!placesService) {
+        console.error("[DEBUG] Places 서비스가 초기화되지 않음");
+        return;
+    }
 
-    console.log("[DEBUG] 시설 데이터 초기화 완료:", facilities.length, "개");
+    const radius = radiusMeters || 2000; // 기본 2km
+    const keywords = ["체육관", "헬스장", "요가", "필라테스", "수영장", "공원", "운동"];
+
+    facilities = [];
+    let completed = 0;
+
+    console.log("[DEBUG] 시설 검색 시작:", keywords.length, "개 키워드");
+
+    keywords.forEach((keyword) => {
+        const options = {
+            location: centerLatLng,
+            radius: radius,
+            size: 15  // 키워드당 최대 15개
+        };
+
+        placesService.keywordSearch(keyword, (results, status) => {
+            completed += 1;
+
+            if (status === kakao.maps.services.Status.OK) {
+                results.forEach((place) => {
+                    const id = place.id;
+                    // 중복 제거
+                    if (!facilities.find((f) => f.id === id)) {
+                        facilities.push({
+                            id,
+                            name: place.place_name,
+                            lat: parseFloat(place.y),
+                            lng: parseFloat(place.x),
+                            address: place.road_address_name || place.address_name,
+                            url: place.place_url,
+                            distance: place.distance ? parseInt(place.distance, 10) : null,
+                            category: place.category_name,
+                            // 기본값으로 설정 (추후 카테고리 분석으로 개선 가능)
+                            isFree: false,
+                            isIndoor: keyword.includes("실내") || keyword.includes("체육관") || keyword.includes("헬스") || keyword.includes("요가") || keyword.includes("필라테스") || keyword.includes("수영장"),
+                            isCourse: keyword.includes("공원") || place.place_name.includes("길") || place.place_name.includes("코스"),
+                            isOpenNow: true,
+                            isOutdoor: keyword.includes("공원") || keyword.includes("야외")
+                        });
+                    }
+                });
+            }
+
+            // 모든 키워드 검색 완료
+            if (completed === keywords.length) {
+                console.log("[DEBUG] 시설 검색 완료:", facilities.length, "개 발견");
+                applyFilters(); // 필터 적용 및 UI 업데이트
+            }
+        }, options);
+    });
 }
 
 // ========== 시설 개수 업데이트 ==========
@@ -689,15 +671,26 @@ function renderFacilityMarkers(facilitiesToShow) {
 // ========== 시설 리스트 렌더링 ==========
 function renderFacilityList(facilitiesToShow) {
     const listEl = document.getElementById("facility-list");
-    if (!listEl) return;
+    const countEl = document.getElementById("facility-count");
+    const emptyEl = document.getElementById("facility-empty");
+    if (!listEl || !countEl) return;
 
     // 기존 내용 제거
     listEl.innerHTML = "";
 
     // 시설이 없으면
     if (facilitiesToShow.length === 0) {
-        listEl.innerHTML = '<div style="padding: 20px; text-align: center; color: #9ca3af;">조건에 맞는 시설이 없습니다.</div>';
+        if (emptyEl) {
+            emptyEl.textContent = "내 주변에 표시할 운동시설이 없습니다.";
+            emptyEl.classList.remove("hidden");
+        }
+        countEl.textContent = "0곳";
         return;
+    }
+
+    // 시설이 있으면 empty 메시지 숨김
+    if (emptyEl) {
+        emptyEl.classList.add("hidden");
     }
 
     // 각 시설을 카드로 추가
