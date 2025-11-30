@@ -341,10 +341,10 @@ function updateMapLayout() {
 // ========== Drawer UI 드래그 가능 Bottom Sheet ==========
 function setupDrawerUI() {
     drawer = document.getElementById("drawer");
-    const drawerGrabArea = document.getElementById("drawer-grab-area");
+    const drawerTop = document.getElementById("drawer-top");
     const facilityList = document.getElementById("facility-list");
 
-    if (!drawer || !drawerGrabArea) return;
+    if (!drawer || !drawerTop) return;
 
     const vh = document.documentElement.clientHeight; // 모바일에서도 안정적
     drawerMinHeight = vh * 0.30; // 30vh
@@ -387,17 +387,18 @@ function setupDrawerUI() {
         updateMapLayout(); // 드래그 종료 후 지도 레이아웃 업데이트
     }
 
-    // 마우스 이벤트
-    drawerGrabArea.addEventListener("mousedown", onDragStart);
+    // 마우스 이벤트 - drawer-top 전체에서 드래그 시작
+    drawerTop.addEventListener("mousedown", onDragStart);
     window.addEventListener("mousemove", onDragMove);
     window.addEventListener("mouseup", onDragEnd);
 
-    // 터치 이벤트 (passive:false로 등록)
-    drawerGrabArea.addEventListener("touchstart", onDragStart, { passive: false });
+    // 터치 이벤트 (passive:false로 등록) - drawer-top 전체에서 드래그 시작
+    drawerTop.addEventListener("touchstart", onDragStart, { passive: false });
     window.addEventListener("touchmove", onDragMove, { passive: false });
     window.addEventListener("touchend", onDragEnd);
 
     if (facilityList) {
+        // 리스트 내부에서는 스크롤만 되게 드래그 시작 막기
         facilityList.addEventListener("touchstart", (e) => e.stopPropagation());
         facilityList.addEventListener("mousedown", (e) => e.stopPropagation());
     }
