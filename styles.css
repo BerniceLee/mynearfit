@@ -509,12 +509,13 @@ main {
     opacity: 0.8;
 }
 
+/* ========== recenter 버튼 - drawer 위에 항상 표시 ========== */
 #recenter-button {
     position: absolute;
     right: 16px;
-    bottom: 16px;
-    width: 44px;
-    height: 44px;
+    bottom: calc(30vh + 20px); /* drawer 최소 높이 + 여백 */
+    width: 48px;
+    height: 48px;
     border-radius: 999px;
     border: none;
     background: #ffffff;
@@ -525,40 +526,14 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
+    z-index: 25; /* drawer(20)보다 높게 */
 }
 
-#recenter-button svg circle {
-    fill: #3b82f6;
-    stroke: #3b82f6;
-}
-
-#recenter-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.3);
-}
-
-#recenter-button:active {
-    transform: scale(0.95);
-}
-
-/* 모바일에서 recenter 버튼 - drawer 위에 항상 표시 */
 @media (max-width: 767px) {
     #recenter-button {
         right: 12px;
-        bottom: calc(30vh + 16px); /* drawer 최소 높이(30vh) + 여백(16px) */
-        z-index: 25; /* drawer(20)보다 위 */
-        width: 48px;
-        height: 48px;
-    }
-}
-
-/* 태블릿 및 작은 데스크톱 */
-@media (min-width: 768px) and (max-width: 1024px) {
-    #recenter-button {
-        right: 16px;
-        bottom: calc(30vh + 16px);
-        z-index: 25;
+        width: 44px;
+        height: 44px;
     }
 }
 
@@ -741,11 +716,12 @@ main {
     display: flex;
     gap: 8px;
     margin-bottom: 12px;
-    overflow-x: auto;
+    overflow-x: scroll; /* scroll로 명시 */
     overflow-y: hidden;
     scrollbar-width: none;
     padding-bottom: 2px;
     -webkit-overflow-scrolling: touch;
+    cursor: default; /* drawer drag와 구분 */
 }
 
 #drawer-filters::-webkit-scrollbar {
@@ -1080,9 +1056,5 @@ main {
 
     header {
         border-radius: 24px 24px 0 0;
-    }
-
-    #map-area {
-        flex: 0 0 45%;
     }
 }

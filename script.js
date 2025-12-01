@@ -501,6 +501,20 @@ function setupDrawerUI() {
         facilityList.addEventListener("mousedown", (e) => e.stopPropagation());
     }
 
+    // 필터 칩 영역에서도 드래그 막기 (스크롤 가능하게)
+    const drawerFilters = document.getElementById("drawer-filters");
+    if (drawerFilters) {
+        drawerFilters.addEventListener("touchstart", (e) => e.stopPropagation());
+        drawerFilters.addEventListener("mousedown", (e) => e.stopPropagation());
+    }
+
+    // 반경 칩 영역에서도 드래그 막기
+    const radiusChipsContainer = document.querySelector(".radius-chips");
+    if (radiusChipsContainer) {
+        radiusChipsContainer.addEventListener("touchstart", (e) => e.stopPropagation());
+        radiusChipsContainer.addEventListener("mousedown", (e) => e.stopPropagation());
+    }
+
     console.log("[DEBUG] Drawer UI 드래그 기능 초기화 완료");
 }
 
