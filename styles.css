@@ -529,9 +529,24 @@ main {
     z-index: 25; /* drawer(20)보다 높게 */
 }
 
+#recenter-button svg circle {
+    fill: #3b82f6;
+    stroke: #3b82f6;
+}
+
+#recenter-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.3);
+}
+
+#recenter-button:active {
+    transform: scale(0.95);
+}
+
 @media (max-width: 767px) {
     #recenter-button {
         right: 12px;
+        bottom: calc(30vh + 60px); /* 모바일: drawer 위에 더 높게 */
         width: 44px;
         height: 44px;
     }

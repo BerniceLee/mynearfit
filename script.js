@@ -301,7 +301,25 @@ function handleRecenter() {
     // 현재 마커 위치로 지도 중심 이동
     const markerPosition = currentMarker.getPosition();
     map.setCenter(markerPosition);
-    console.log("지도 중심을 마커 위치로 이동 완료");
+    map.setLevel(4); // 기본 줌 레벨로 복귀
+
+    // 검색 마커 제거
+    if (searchMarker) {
+        searchMarker.setMap(null);
+        searchMarker = null;
+    }
+
+    // searchCenter 초기화 (현재 위치 기준으로 재설정)
+    searchCenter = null;
+
+    // 현재 위치 기준으로 시설 재조회
+    const radius = selectedRadius * 1000; // km → m
+    fetchNearbyFacilities(markerPosition, radius);
+
+    showStatusMessage("내 위치 기준으로 시설을 다시 불러왔어요.");
+    setTimeout(() => hideStatusMessage(), 3000);
+
+    console.log("지도 중심을 마커 위치로 이동하고 시설 재조회 완료");
 }
 
 // ========== 검색 기능 ==========
@@ -485,13 +503,17 @@ function setupDrawerUI() {
         updateMapLayout(); // 드래그 종료 후 지도 레이아웃 업데이트
     }
 
-    // 마우스 이벤트 - drawer-top 전체에서 드래그 시작
-    drawerTop.addEventListener("mousedown", onDragStart);
+    // drawer-grab-area에서만 드래그 시작 (필터/반경 칩과 충돌 방지)
+    const grabArea = document.getElementById("drawer-grab-area");
+    if (!grabArea) return;
+
+    // 마우스 이벤트 - grab-area에서만 드래그 시작
+    grabArea.addEventListener("mousedown", onDragStart);
     window.addEventListener("mousemove", onDragMove);
     window.addEventListener("mouseup", onDragEnd);
 
-    // 터치 이벤트 (passive:false로 등록) - drawer-top 전체에서 드래그 시작
-    drawerTop.addEventListener("touchstart", onDragStart, { passive: false });
+    // 터치 이벤트 (passive:false로 등록) - grab-area에서만 드래그 시작
+    grabArea.addEventListener("touchstart", onDragStart, { passive: false });
     window.addEventListener("touchmove", onDragMove, { passive: false });
     window.addEventListener("touchend", onDragEnd);
 
