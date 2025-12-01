@@ -42,6 +42,7 @@ let visibleFacilities = []; // 현재 필터링된 시설
 let facilityMarkers = []; // 지도에 표시된 시설 마커들
 let facilityMarkerImage; // 시설 마커 아이콘
 let userPosition = null; // 사용자 현재 위치 { lat, lng }
+let searchCenter = null; // 검색으로 선택한 위치 (LatLng 객체)
 
 // ========== 검색 결과 관리 ==========
 let searchResults = [];
@@ -399,21 +400,35 @@ function computeDistanceMeters(lat1, lng1, lat2, lng2) {
     return Math.round(R * c);
 }
 
+// ========== 거리 계산 기준 좌표 가져오기 ==========
+function getDistanceBase() {
+    // 우선순위: 검색 위치 > 사용자 위치 > 지도 중심
+    if (searchCenter) {
+        return { lat: searchCenter.getLat(), lng: searchCenter.getLng() };
+    }
+    if (userPosition) {
+        return userPosition;
+    }
+    if (map) {
+        const center = map.getCenter();
+        return { lat: center.getLat(), lng: center.getLng() };
+    }
+    return null;
+}
+
 // ========== 시설 리스트를 거리순으로 정렬 ==========
 function sortFacilitiesByDistance(list) {
     if (!list || list.length === 0) return [];
 
+    const base = getDistanceBase();
+    if (!base) return list;
+
     return list
         .map((f) => {
             let d = f.distance;
-            // distance가 없으면 userPosition 기준으로 계산
-            if ((d == null || d === undefined) && userPosition) {
-                d = computeDistanceMeters(
-                    userPosition.lat,
-                    userPosition.lng,
-                    f.lat,
-                    f.lng
-                );
+            // distance가 없으면 기준 좌표로 계산
+            if (d == null || d === undefined) {
+                d = computeDistanceMeters(base.lat, base.lng, f.lat, f.lng);
             }
             // distance를 시설 객체에 업데이트
             return { ...f, distance: Number(d) || 99999999 };
@@ -983,9 +998,16 @@ function handleSearchResultClick(lat, lng, placeName) {
         searchResultsSheet.classList.add("hidden");
     }
 
+    // 검색 기준 좌표 저장
+    searchCenter = newPos;
+
+    // 선택한 장소를 기준으로 반경 내 시설 재조회
+    const radius = selectedRadius * 1000; // km → m
+    fetchNearbyFacilities(newPos, radius);
+
     // 상태 메시지 표시
-    showStatusMessage(`"${placeName}" 근처로 이동했어요.`);
-    console.log("[DEBUG] 검색 결과 선택:", placeName);
+    showStatusMessage(`"${placeName}" 근처 시설을 검색중이에요.`);
+    console.log("[DEBUG] 검색 결과 선택:", placeName, "- 시설 재조회");
 
     // 3초 후 상태 메시지 숨김
     setTimeout(() => {
