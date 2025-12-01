@@ -870,16 +870,19 @@ function applyFilters() {
         const distanceKm = calculateDistance(userPos.getLat(), userPos.getLng(), f.lat, f.lng);
         if (distanceKm > selectedRadius) return false;
 
-        // 2. 속성 필터
+        // 2. 속성 필터 - activeFilters가 비어있으면 모두 통과
+        if (activeFilters.size === 0) return true;
+
+        // activeFilters 중 하나라도 만족하면 통과 (OR 조건)
         for (const filter of activeFilters) {
-            if (filter === "free" && !f.isFree) return false;
-            if (filter === "indoor" && !f.isIndoor) return false;
-            if (filter === "outdoor" && !f.isIndoor && !f.isCourse) return true; // 실외는 실내도 코스도 아닌 것
-            if (filter === "course" && !f.isCourse) return false;
-            if (filter === "open_now" && !f.isOpenNow) return false;
+            if (filter === "free" && f.isFree) return true;
+            if (filter === "indoor" && f.isIndoor) return true;
+            if (filter === "outdoor" && !f.isIndoor && !f.isCourse) return true;
+            if (filter === "course" && f.isCourse) return true;
+            if (filter === "open_now" && f.isOpenNow) return true;
         }
 
-        return true;
+        return false; // 어떤 필터도 만족하지 못하면 제외
     });
 
     // 거리순으로 정렬 (가까운 순)
