@@ -509,7 +509,7 @@ function setupRadiusChips() {
     const radiusChips = document.querySelectorAll(".radius-chip");
 
     radiusChips.forEach(chip => {
-        chip.addEventListener("click", () => {
+        const handleRadiusChange = () => {
             // 모든 칩에서 active 제거
             radiusChips.forEach(c => c.classList.remove("active"));
             // 클릭한 칩에 active 추가
@@ -528,7 +528,16 @@ function setupRadiusChips() {
             setTimeout(() => {
                 hideStatusMessage();
             }, 3000);
-        });
+        };
+
+        // 클릭 이벤트 (PC)
+        chip.addEventListener("click", handleRadiusChange);
+
+        // 터치 이벤트 (모바일)
+        chip.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            handleRadiusChange();
+        }, { passive: false });
     });
 
     console.log("[DEBUG] 반경 칩 UI 초기화 완료");
@@ -540,7 +549,7 @@ function setupFilterChips() {
     console.log("[DEBUG] 필터 칩 개수:", filterChips.length);
 
     filterChips.forEach((chip, index) => {
-        chip.addEventListener("click", () => {
+        const handleFilterToggle = () => {
             console.log(`[DEBUG] 필터 칩 클릭 이벤트 발생 (chip ${index}):`, chip.textContent);
 
             // active 토글
@@ -572,7 +581,16 @@ function setupFilterChips() {
             setTimeout(() => {
                 hideStatusMessage();
             }, 3000);
-        });
+        };
+
+        // 클릭 이벤트 (PC)
+        chip.addEventListener("click", handleFilterToggle);
+
+        // 터치 이벤트 (모바일) - 중복 실행 방지
+        chip.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            handleFilterToggle();
+        }, { passive: false });
     });
 
     console.log("[DEBUG] 필터 칩 UI 초기화 완료, 이벤트 리스너 등록됨");
@@ -697,7 +715,7 @@ function fetchNearbyFacilities(centerLatLng, radiusMeters) {
     }
 
     const radius = radiusMeters || 2000; // 기본 2km
-    const keywords = ["체육관", "헬스장", "요가", "필라테스", "수영장", "공원", "운동"];
+    const keywords = ["체육관", "헬스장", "요가", "필라테스", "수영장", "공원", "운동", "피트니스", "산책로", "배드민턴", "테니스"];
 
     facilities = [];
     let completed = 0;
@@ -708,6 +726,7 @@ function fetchNearbyFacilities(centerLatLng, radiusMeters) {
         const options = {
             location: centerLatLng,
             radius: radius,
+            page: 1,
             size: 15  // 키워드당 최대 15개
         };
 
@@ -728,12 +747,12 @@ function fetchNearbyFacilities(centerLatLng, radiusMeters) {
                             url: place.place_url,
                             distance: place.distance ? parseInt(place.distance, 10) : null,
                             category: place.category_name,
-                            // 기본값으로 설정 (추후 카테고리 분석으로 개선 가능)
-                            isFree: false,
-                            isIndoor: keyword.includes("실내") || keyword.includes("체육관") || keyword.includes("헬스") || keyword.includes("요가") || keyword.includes("필라테스") || keyword.includes("수영장"),
-                            isCourse: keyword.includes("공원") || place.place_name.includes("길") || place.place_name.includes("코스"),
+                            // 무료 시설 판단: 공원, 산책로, 길, 코스 등
+                            isFree: keyword.includes("공원") || keyword.includes("산책로") || place.place_name.includes("공원") || place.place_name.includes("길") || place.place_name.includes("코스") || place.place_name.includes("산책") || place.category_name.includes("공원"),
+                            isIndoor: keyword.includes("실내") || keyword.includes("체육관") || keyword.includes("헬스") || keyword.includes("요가") || keyword.includes("필라테스") || keyword.includes("수영장") || keyword.includes("피트니스"),
+                            isCourse: keyword.includes("공원") || keyword.includes("산책로") || place.place_name.includes("길") || place.place_name.includes("코스") || place.place_name.includes("산책"),
                             isOpenNow: true,
-                            isOutdoor: keyword.includes("공원") || keyword.includes("야외")
+                            isOutdoor: keyword.includes("공원") || keyword.includes("야외") || keyword.includes("산책로")
                         });
                     }
                 });
