@@ -537,14 +537,20 @@ function setupRadiusChips() {
 // ========== 필터 칩 UI ==========
 function setupFilterChips() {
     const filterChips = document.querySelectorAll("#drawer-filters .filter-chip");
+    console.log("[DEBUG] 필터 칩 개수:", filterChips.length);
 
-    filterChips.forEach(chip => {
+    filterChips.forEach((chip, index) => {
         chip.addEventListener("click", () => {
+            console.log(`[DEBUG] 필터 칩 클릭 이벤트 발생 (chip ${index}):`, chip.textContent);
+
             // active 토글
             chip.classList.toggle("active");
 
             const filter = chip.getAttribute("data-filter");
             const isActive = chip.classList.contains("active");
+
+            console.log(`[DEBUG] 필터: ${filter}, 상태: ${isActive ? "활성화" : "비활성화"}`);
+            console.log(`[DEBUG] activeFilters before:`, Array.from(activeFilters));
 
             if (isActive) {
                 activeFilters.add(filter);
@@ -554,10 +560,13 @@ function setupFilterChips() {
                 showStatusMessage(`"${chip.textContent}" 필터를 해제했어요.`);
             }
 
-            console.log("필터 칩 클릭:", filter, isActive ? "활성화" : "비활성화");
+            console.log(`[DEBUG] activeFilters after:`, Array.from(activeFilters));
+            console.log(`[DEBUG] applyFilters() 호출 시작`);
 
             // 필터 재적용
             applyFilters();
+
+            console.log(`[DEBUG] applyFilters() 호출 완료`);
 
             // 3초 후 상태바 숨김
             setTimeout(() => {
@@ -566,7 +575,7 @@ function setupFilterChips() {
         });
     });
 
-    console.log("[DEBUG] 필터 칩 UI 초기화 완료");
+    console.log("[DEBUG] 필터 칩 UI 초기화 완료, 이벤트 리스너 등록됨");
 }
 
 // ========== 시설 카드 버튼 UI (이벤트 위임 방식) ==========
@@ -860,12 +869,15 @@ function highlightFacilityCard(facilityId) {
 
 // ========== 필터 적용 ==========
 function applyFilters() {
+    console.log(`[DEBUG] applyFilters() 실행 시작 - activeFilters:`, Array.from(activeFilters), `selectedRadius: ${selectedRadius}km`);
+
     if (!currentMarker) {
         console.warn("[DEBUG] 현재 위치 마커가 없어 필터를 적용할 수 없습니다.");
         return;
     }
 
     const userPos = currentMarker.getPosition();
+    console.log(`[DEBUG] 전체 시설 수: ${facilities.length}`);
 
     // 거리 계산 함수 (Haversine formula, km 단위)
     function calculateDistance(lat1, lng1, lat2, lng2) {
@@ -903,9 +915,16 @@ function applyFilters() {
     // 거리순으로 정렬 (가까운 순)
     visibleFacilities = sortFacilitiesByDistance(visibleFacilities);
 
+    console.log(`[DEBUG] 필터링 후 시설 수: ${visibleFacilities.length}`);
+
     // UI 업데이트
+    console.log(`[DEBUG] renderFacilityList() 호출`);
     renderFacilityList(visibleFacilities);
+
+    console.log(`[DEBUG] renderFacilityMarkers() 호출`);
     renderFacilityMarkers(visibleFacilities);
+
+    console.log(`[DEBUG] updateFacilityCount() 호출`);
     updateFacilityCount(visibleFacilities.length);
 
     console.log("[DEBUG] 필터 적용 완료:", visibleFacilities.length, "/", facilities.length, "개 표시");

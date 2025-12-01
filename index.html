@@ -115,84 +115,84 @@
                     </div>
 
                     <!-- 내 위치로 다시 보기 버튼 -->
-                    <button id="recenter-button">
+                    <button id="recenter-button" type="button">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                             <circle cx="10" cy="10" r="3" fill="white"/>
                             <circle cx="10" cy="10" r="7" stroke="white" stroke-width="2"/>
                         </svg>
                     </button>
-                </div>
-            </div>
 
-            <!-- 추천 카드 영역 -->
-            <section id="recommend-section">
-                <div class="recommend-card">
-                    <div class="recommend-icon">🚶</div>
-                    <div class="recommend-text">
-                        <h3>지금 바로 걷기 좋은 코스</h3>
-                        <p>내 위치에서 가까운 걷기 코스를 추천드려요</p>
-                    </div>
-                </div>
-                <div class="recommend-card secondary">
-                    <div class="recommend-icon">🏃</div>
-                    <div class="recommend-text">
-                        <h3>무료로 이용 가능한 운동시설</h3>
-                        <p>근처에서 바로 사용할 수 있는 무료 운동시설</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 하단 Drawer -->
-            <section id="drawer" class="collapsed">
-                <div id="drawer-top">
-                    <div id="drawer-grab-area">
-                        <div id="drawer-handle"></div>
-                    </div>
-
-                    <div id="drawer-header">
-                        <div class="drawer-title">
-                            <span class="title-icon">📍</span>
-                            <span class="title-text">내 주변 운동시설</span>
-                            <span id="facility-count">12곳</span>
+                    <!-- 추천 카드 영역 -->
+                    <section id="recommend-section">
+                        <div class="recommend-card">
+                            <div class="recommend-icon">🚶</div>
+                            <div class="recommend-text">
+                                <h3>지금 바로 걷기 좋은 코스</h3>
+                                <p>내 위치에서 가까운 걷기 코스를 추천드려요</p>
+                            </div>
                         </div>
-                        <div class="radius-chips">
-                            <button class="radius-chip" data-radius="1">1km</button>
-                            <button class="radius-chip active" data-radius="2">2km</button>
-                            <button class="radius-chip" data-radius="3">3km</button>
+                        <div class="recommend-card secondary">
+                            <div class="recommend-icon">🏃</div>
+                            <div class="recommend-text">
+                                <h3>무료로 이용 가능한 운동시설</h3>
+                                <p>근처에서 바로 사용할 수 있는 무료 운동시설</p>
+                            </div>
                         </div>
+                    </section>
+
+                    <!-- 하단 Drawer -->
+                    <section id="drawer" class="collapsed">
+                        <div id="drawer-top">
+                            <div id="drawer-grab-area">
+                                <div id="drawer-handle"></div>
+                            </div>
+
+                            <div id="drawer-header">
+                                <div class="drawer-title">
+                                    <span class="title-icon">📍</span>
+                                    <span class="title-text">내 주변 운동시설</span>
+                                    <span id="facility-count">12곳</span>
+                                </div>
+                                <div class="radius-chips">
+                                    <button class="radius-chip" data-radius="1">1km</button>
+                                    <button class="radius-chip active" data-radius="2">2km</button>
+                                    <button class="radius-chip" data-radius="3">3km</button>
+                                </div>
+                            </div>
+
+                            <div id="drawer-filters">
+                                <button class="filter-chip" data-filter="free">🎁 무료 시설</button>
+                                <button class="filter-chip" data-filter="indoor">🏢 실내 운동</button>
+                                <button class="filter-chip" data-filter="outdoor">🌳 실외 운동</button>
+                                <button class="filter-chip" data-filter="course">🚶 걷기 코스</button>
+                                <button class="filter-chip" data-filter="open_now">⏰ 운영 중</button>
+                            </div>
+                        </div>
+
+                        <div id="facility-empty" class="facility-empty hidden">
+                            내 주변에 표시할 운동시설이 없습니다.
+                        </div>
+                        <div id="facility-list">
+                            <!-- 동적으로 생성됨 -->
+                        </div>
+                    </section>
+
+                    <!-- 검색 결과 Sheet -->
+                    <section id="search-results-sheet" class="hidden">
+                        <div class="sheet-header">
+                            <div class="sheet-title">검색 결과</div>
+                            <button id="search-results-close">닫기</button>
+                        </div>
+                        <div id="search-results-list">
+                            <!-- 검색 결과 아이템 목록 -->
+                        </div>
+                    </section>
+
+                    <!-- 상태바 -->
+                    <div id="status-bar" class="hidden">
+                        <span id="status-text"></span>
                     </div>
-
-                    <div id="drawer-filters">
-                        <button class="filter-chip" data-filter="free">🎁 무료 시설</button>
-                        <button class="filter-chip" data-filter="indoor">🏢 실내 운동</button>
-                        <button class="filter-chip" data-filter="outdoor">🌳 실외 운동</button>
-                        <button class="filter-chip" data-filter="course">🚶 걷기 코스</button>
-                        <button class="filter-chip" data-filter="open_now">⏰ 운영 중</button>
-                    </div>
                 </div>
-
-                <div id="facility-empty" class="facility-empty hidden">
-                    내 주변에 표시할 운동시설이 없습니다.
-                </div>
-                <div id="facility-list">
-                    <!-- 동적으로 생성됨 -->
-                </div>
-            </section>
-
-            <!-- 검색 결과 Sheet -->
-            <section id="search-results-sheet" class="hidden">
-                <div class="sheet-header">
-                    <div class="sheet-title">검색 결과</div>
-                    <button id="search-results-close">닫기</button>
-                </div>
-                <div id="search-results-list">
-                    <!-- 검색 결과 아이템 목록 -->
-                </div>
-            </section>
-
-            <!-- 상태바 -->
-            <div id="status-bar" class="hidden">
-                <span id="status-text"></span>
             </div>
         </main>
     </div>
