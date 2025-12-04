@@ -514,7 +514,7 @@ main {
 #recenter-button {
     position: absolute;
     right: 16px;
-    bottom: 16px; /* 지도 하단에서 16px */
+    bottom: calc(30vh + 16px); /* drawer 최소 높이(30vh) 위 */
     width: 48px;
     height: 48px;
     border-radius: 999px;
@@ -527,7 +527,7 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 5; /* drawer(20)보다 낮음 - drawer가 올라오면 가려짐 */
+    z-index: 15; /* drawer(20)보다 낮지만 보이도록 */
 }
 
 #recenter-button svg circle {
@@ -547,7 +547,7 @@ main {
 @media (max-width: 767px) {
     #recenter-button {
         right: 12px;
-        bottom: 12px; /* 모바일: 지도 하단에서 12px */
+        bottom: calc(30vh + 12px); /* 모바일: drawer 위 */
         width: 44px;
         height: 44px;
     }
