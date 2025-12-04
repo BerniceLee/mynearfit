@@ -677,16 +677,22 @@ main {
 }
 
 #drawer-handle {
-    width: 40px;
-    height: 4px;
-    border-radius: 999px;
-    background: #d1d5db;
-    transition: background 0.2s;
-    pointer-events: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
 }
 
-#drawer-top:active #drawer-handle {
-    background: #9ca3af;
+#drawer-handle:hover {
+    opacity: 0.7;
+}
+
+#drawer-handle .arrow-icon {
+    transition: transform 0.3s ease;
+}
+
+/* Drawer expanded state - arrow points down */
+#drawer.expanded #drawer-handle .arrow-icon {
+    transform: rotate(180deg);
+    transform-origin: center;
 }
 
 #drawer-header {

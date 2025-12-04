@@ -393,13 +393,49 @@ function collapseDrawer() {
     }
     if (!drawer || !drawerMinHeight) return;
 
-    drawer.style.transition = "height 0.2s ease-out";
+    drawer.style.transition = "height 0.3s ease-out";
     drawer.style.height = drawerMinHeight + "px";
+    drawer.classList.remove("expanded");
+    drawer.classList.add("collapsed");
 
     // 맵 레이아웃 보정
     setTimeout(() => {
         updateMapLayout();
-    }, 200);
+    }, 300);
+}
+
+// ========== Drawer 확장 함수 ==========
+function expandDrawer() {
+    if (!drawer) {
+        drawer = document.getElementById("drawer");
+    }
+    if (!drawer || !drawerMaxHeight) return;
+
+    drawer.style.transition = "height 0.3s ease-out";
+    drawer.style.height = drawerMaxHeight + "px";
+    drawer.classList.remove("collapsed");
+    drawer.classList.add("expanded");
+
+    // 맵 레이아웃 보정
+    setTimeout(() => {
+        updateMapLayout();
+    }, 300);
+}
+
+// ========== Drawer 토글 함수 ==========
+function toggleDrawer() {
+    if (!drawer) {
+        drawer = document.getElementById("drawer");
+    }
+    if (!drawer) return;
+
+    const isExpanded = drawer.classList.contains("expanded");
+
+    if (isExpanded) {
+        collapseDrawer();
+    } else {
+        expandDrawer();
+    }
 }
 
 // ========== 거리 계산 함수 (Haversine formula, 미터 단위) ==========
@@ -496,16 +532,35 @@ function setupDrawerUI() {
     function onDragEnd() {
         if (!isDragging) return;
         isDragging = false;
-        drawer.style.transition = "height 0.2s ease-out";
+        drawer.style.transition = "height 0.3s ease-out";
         const currentHeight = drawer.offsetHeight;
         const middle = (drawerMinHeight + drawerMaxHeight) / 2;
-        drawer.style.height = currentHeight < middle ? drawerMinHeight + "px" : drawerMaxHeight + "px";
+
+        if (currentHeight < middle) {
+            drawer.style.height = drawerMinHeight + "px";
+            drawer.classList.remove("expanded");
+            drawer.classList.add("collapsed");
+        } else {
+            drawer.style.height = drawerMaxHeight + "px";
+            drawer.classList.remove("collapsed");
+            drawer.classList.add("expanded");
+        }
+
         updateMapLayout(); // 드래그 종료 후 지도 레이아웃 업데이트
     }
 
     // drawer-grab-area에서만 드래그 시작 (필터/반경 칩과 충돌 방지)
     const grabArea = document.getElementById("drawer-grab-area");
+    const drawerHandle = document.getElementById("drawer-handle");
     if (!grabArea) return;
+
+    // 화살표 아이콘 클릭 시 토글
+    if (drawerHandle) {
+        drawerHandle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleDrawer();
+        });
+    }
 
     // 마우스 이벤트 - grab-area에서만 드래그 시작
     grabArea.addEventListener("mousedown", onDragStart);
@@ -817,7 +872,7 @@ function renderFacilityMarkers(facilitiesToShow) {
 
     // 기존 마커 모두 제거
     facilityMarkers.forEach(marker => marker.setMap(null));
-    facilityMarkers = [];
+    facilityMarkers = [];ㄹ
 
     // 새 마커 생성
     facilitiesToShow.forEach(facility => {
