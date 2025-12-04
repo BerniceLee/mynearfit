@@ -229,6 +229,7 @@ function initMapWithPosition(lat, lng) {
         setupFilterChips();
         setupFacilityButtons();
         setupSearchResultsSheet();
+        setupFontSizeControls();
         initializeFacilities();
 
         // 로딩 → 메인 전환 + 스크롤 맨 위
@@ -693,6 +694,45 @@ function setupFilterChips() {
     });
 
     console.log("[DEBUG] 필터 칩 UI 초기화 완료, 이벤트 리스너 등록됨");
+}
+
+// ========== 폰트 크기 조절 UI ==========
+function setupFontSizeControls() {
+    const fontSizeSmall = document.getElementById("font-size-small");
+    const fontSizeLarge = document.getElementById("font-size-large");
+
+    if (!fontSizeSmall || !fontSizeLarge) {
+        console.warn("[DEBUG] 폰트 크기 버튼을 찾을 수 없습니다.");
+        return;
+    }
+
+    // 로컬스토리지에서 설정 불러오기
+    const savedFontSize = localStorage.getItem("fontSize") || "small";
+    if (savedFontSize === "large") {
+        document.body.classList.add("font-large");
+        fontSizeSmall.classList.remove("active");
+        fontSizeLarge.classList.add("active");
+    }
+
+    // 기본 크기 버튼
+    fontSizeSmall.addEventListener("click", () => {
+        document.body.classList.remove("font-large");
+        fontSizeSmall.classList.add("active");
+        fontSizeLarge.classList.remove("active");
+        localStorage.setItem("fontSize", "small");
+        console.log("[DEBUG] 폰트 크기: 기본");
+    });
+
+    // 큰 글씨 버튼
+    fontSizeLarge.addEventListener("click", () => {
+        document.body.classList.add("font-large");
+        fontSizeSmall.classList.remove("active");
+        fontSizeLarge.classList.add("active");
+        localStorage.setItem("fontSize", "large");
+        console.log("[DEBUG] 폰트 크기: 큰 글씨");
+    });
+
+    console.log("[DEBUG] 폰트 크기 조절 UI 초기화 완료");
 }
 
 // ========== 시설 카드 버튼 UI (이벤트 위임 방식) ==========

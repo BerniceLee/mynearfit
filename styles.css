@@ -14,7 +14,60 @@ body {
     font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", sans-serif;
     background: #ffffff;
     color: #111827;
-    font-size: 16px; /* 기본 폰트 크기 증가 */
+    font-size: 16px; /* 기본 폰트 크기 */
+}
+
+/* 큰 글씨 모드 */
+body.font-large {
+    font-size: 18px;
+}
+
+body.font-large .header-title {
+    font-size: 22px;
+}
+
+body.font-large .drawer-title .title-text {
+    font-size: 19px;
+}
+
+body.font-large #facility-count {
+    font-size: 18px;
+}
+
+body.font-large .radius-chip {
+    font-size: 17px;
+}
+
+body.font-large .filter-chip {
+    font-size: 16px;
+}
+
+body.font-large .facility-name {
+    font-size: 18px;
+}
+
+body.font-large .facility-address {
+    font-size: 15px;
+}
+
+body.font-large .facility-distance {
+    font-size: 14px;
+}
+
+body.font-large .feature-text-item h3 {
+    font-size: 26px;
+}
+
+body.font-large .feature-text-item p {
+    font-size: 18px;
+}
+
+body.font-large .cta-button {
+    font-size: 20px;
+}
+
+body.font-large .permission-note {
+    font-size: 15px;
 }
 
 /* ========== 브랜드 그라데이션 ========== */
@@ -452,9 +505,54 @@ header {
 }
 
 .header-right {
-    font-size: 13px; /* 12px → 13px */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 폰트 크기 조절 버튼 */
+.font-size-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.font-size-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.font-size-btn:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.font-size-btn.active {
+    border-color: #3b82f6;
+    background: #3b82f6;
+}
+
+.font-size-btn.active .font-icon {
+    color: #ffffff;
+}
+
+.font-icon {
+    font-size: 14px;
+    font-weight: 700;
     color: #6b7280;
-    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.font-icon.large {
+    font-size: 18px;
 }
 
 main {
