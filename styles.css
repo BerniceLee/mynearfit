@@ -510,11 +510,11 @@ main {
     opacity: 0.8;
 }
 
-/* ========== recenter 버튼 ========== */
+/* ========== recenter 버튼 - 지도 우측 하단 고정 ========== */
 #recenter-button {
     position: absolute;
     right: 16px;
-    bottom: calc(30vh + 20px); /* drawer 최소 높이 + 여백 */
+    bottom: 16px; /* 지도 하단에서 16px */
     width: 48px;
     height: 48px;
     border-radius: 999px;
@@ -527,7 +527,7 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10; /* drawer(20)보다 낮게 - drawer 아래 배치 */
+    z-index: 5; /* drawer(20)보다 낮음 - drawer가 올라오면 가려짐 */
 }
 
 #recenter-button svg circle {
@@ -547,7 +547,7 @@ main {
 @media (max-width: 767px) {
     #recenter-button {
         right: 12px;
-        bottom: calc(30vh + 60px); /* 모바일: drawer 위에 더 높게 */
+        bottom: 12px; /* 모바일: 지도 하단에서 12px */
         width: 44px;
         height: 44px;
     }

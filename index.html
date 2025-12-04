@@ -102,7 +102,15 @@
             <!-- 지도 영역 -->
             <div id="map-area">
                 <div id="map-wrapper">
-                    <div id="map"></div>
+                    <div id="map">
+                        <!-- 내 위치로 다시 보기 버튼 - 지도 우측 하단 고정 -->
+                        <button id="recenter-button" type="button">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <circle cx="10" cy="10" r="3" fill="white"/>
+                                <circle cx="10" cy="10" r="7" stroke="white" stroke-width="2"/>
+                            </svg>
+                        </button>
+                    </div>
 
                     <!-- 지도 위 검색 바 -->
                     <div id="map-search">
@@ -114,24 +122,9 @@
                         <button id="search-button">검색</button>
                     </div>
 
-                    <!-- 내 위치로 다시 보기 버튼 -->
-                    <button id="recenter-button" type="button">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <circle cx="10" cy="10" r="3" fill="white"/>
-                            <circle cx="10" cy="10" r="7" stroke="white" stroke-width="2"/>
-                        </svg>
-                    </button>
-
                     <!-- 추천 카드 영역 -->
                     <section id="recommend-section">
                         <div class="recommend-card">
-                            <div class="recommend-icon">🚶</div>
-                            <div class="recommend-text">
-                                <h3>지금 바로 걷기 좋은 코스</h3>
-                                <p>내 위치에서 가까운 걷기 코스를 추천드려요</p>
-                            </div>
-                        </div>
-                        <div class="recommend-card secondary">
                             <div class="recommend-icon">🏃</div>
                             <div class="recommend-text">
                                 <h3>무료로 이용 가능한 운동시설</h3>
