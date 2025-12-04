@@ -13,42 +13,35 @@
 <body>
     <!-- 1. 온보딩 페이지 -->
     <div id="onboarding-page">
-        <div class="onboarding-content">
-            <div class="onboarding-header">
-                <div class="brand-badge">
-                    <div class="badge-icon">📍</div>
+        <div class="onboarding-container">
+            <div class="onboarding-hero">
+                <div class="hero-icon-wrapper">
+                    <img src="https://cdn-icons-png.freepik.com/128/15333/15333156.png" alt="Workout" class="hero-icon" />
                 </div>
-                <h1 class="service-title">근린핏</h1>
-                <p class="service-subtitle">내 주변 운동시설을 한눈에</p>
+                <h1 class="hero-title">근린핏</h1>
+                <p class="hero-subtitle">내 주변 운동시설을 한눈에</p>
             </div>
 
-            <div class="feature-list">
-                <div class="feature-item">
-                    <div class="feature-icon">🏃</div>
-                    <div class="feature-text">
-                        <h3>무료 운동시설</h3>
-                        <p>공원부터 체육관까지 무료로 이용 가능한 시설</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-card-icon">
+                        <img src="https://cdn-icons-png.freepik.com/128/8441/8441750.png" alt="무료 시설" />
                     </div>
+                    <h3 class="feature-card-title">무료 운동시설</h3>
+                    <p class="feature-card-desc">공원부터 체육관까지<br>무료로 이용 가능</p>
                 </div>
-                <div class="feature-item">
-                    <div class="feature-icon">🚶</div>
-                    <div class="feature-text">
-                        <h3>걷기 좋은 코스</h3>
-                        <p>산책로와 공원 등 걷기 좋은 장소 추천</p>
+                <div class="feature-card">
+                    <div class="feature-card-icon">
+                        <img src="https://cdn-icons-png.freepik.com/128/2445/2445931.png" alt="거리 기반" />
                     </div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">📍</div>
-                    <div class="feature-text">
-                        <h3>거리 기반 탐색</h3>
-                        <p>1~3km 반경 내 가까운 시설부터 확인</p>
-                    </div>
+                    <h3 class="feature-card-title">거리 기반 탐색</h3>
+                    <p class="feature-card-desc">1~3km 반경 내<br>가까운 시설부터 확인</p>
                 </div>
             </div>
         </div>
 
-        <div class="onboarding-actions">
-            <button id="start-button">
+        <div class="onboarding-footer">
+            <button id="start-button" class="cta-button">
                 <span>내 위치로 시작하기</span>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path d="M7 14L12 9L7 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
