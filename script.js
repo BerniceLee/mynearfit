@@ -601,16 +601,23 @@ function setupRadiusChips() {
 
     radiusChips.forEach(chip => {
         const handleRadiusChange = () => {
-            // 모든 칩에서 active 제거
-            radiusChips.forEach(c => c.classList.remove("active"));
-            // 클릭한 칩에 active 추가
-            chip.classList.add("active");
-
             const radius = parseInt(chip.getAttribute("data-radius"));
-            selectedRadius = radius;
+            const isCurrentlyActive = chip.classList.contains("active");
 
-            showStatusMessage(`반경 ${radius}km 내 시설을 보고 있어요.`);
-            console.log("반경 칩 클릭:", radius + "km");
+            if (isCurrentlyActive) {
+                // 이미 선택된 칩을 다시 클릭 → 거리 제한 해제
+                chip.classList.remove("active");
+                selectedRadius = null;
+                showStatusMessage("거리 제한 없이 모든 시설을 보고 있어요.");
+                console.log("반경 필터 해제 (전체 보기)");
+            } else {
+                // 다른 칩 클릭 → 해당 반경으로 변경
+                radiusChips.forEach(c => c.classList.remove("active"));
+                chip.classList.add("active");
+                selectedRadius = radius;
+                showStatusMessage(`반경 ${radius}km 내 시설을 보고 있어요.`);
+                console.log("반경 칩 클릭:", radius + "km");
+            }
 
             // 필터 재적용
             applyFilters();
@@ -872,7 +879,7 @@ function renderFacilityMarkers(facilitiesToShow) {
 
     // 기존 마커 모두 제거
     facilityMarkers.forEach(marker => marker.setMap(null));
-    facilityMarkers = [];ㄹ
+    facilityMarkers = [];
 
     // 새 마커 생성
     facilitiesToShow.forEach(facility => {
@@ -1003,9 +1010,11 @@ function applyFilters() {
 
     // 필터 적용
     visibleFacilities = facilities.filter((f) => {
-        // 1. 반경 필터
-        const distanceKm = calculateDistance(userPos.getLat(), userPos.getLng(), f.lat, f.lng);
-        if (distanceKm > selectedRadius) return false;
+        // 1. 반경 필터 (selectedRadius가 null이면 거리 제한 없음)
+        if (selectedRadius !== null) {
+            const distanceKm = calculateDistance(userPos.getLat(), userPos.getLng(), f.lat, f.lng);
+            if (distanceKm > selectedRadius) return false;
+        }
 
         // 2. 속성 필터 - activeFilters가 비어있으면 모두 통과
         if (activeFilters.size === 0) return true;
