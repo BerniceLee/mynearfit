@@ -105,10 +105,14 @@
                     <div id="map"></div>
 
                     <!-- 내 위치로 다시 보기 버튼 - 지도 우측 하단 고정 -->
-                    <button id="recenter-button" type="button">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <circle cx="10" cy="10" r="3" fill="white"/>
-                            <circle cx="10" cy="10" r="7" stroke="white" stroke-width="2"/>
+                    <button id="recenter-button" type="button" title="내 위치로 이동">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                            <line x1="12" y1="2" x2="12" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="2" y1="12" x2="6" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="18" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         </svg>
                     </button>
 

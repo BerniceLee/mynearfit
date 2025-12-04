@@ -517,31 +517,28 @@ main {
     bottom: calc(30vh + 16px); /* drawer 최소 높이(30vh) 위 */
     width: 48px;
     height: 48px;
-    border-radius: 999px;
+    border-radius: 12px; /* 999px → 12px 둥근 사각형 */
     border: none;
     background: #ffffff;
-    color: #3b82f6;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.2);
+    color: #4b5563; /* 차분한 회색 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 15; /* drawer(20)보다 낮지만 보이도록 */
 }
 
-#recenter-button svg circle {
-    fill: #3b82f6;
-    stroke: #3b82f6;
-}
-
 #recenter-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.3);
+    background: #f9fafb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #3b82f6; /* hover 시 파란색 */
 }
 
 #recenter-button:active {
-    transform: scale(0.95);
+    transform: scale(0.96);
+    background: #f3f4f6;
 }
 
 @media (max-width: 767px) {
