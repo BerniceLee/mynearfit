@@ -58,24 +58,25 @@ body {
 /* 헤더 텍스트 */
 .onboarding-header {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 36px;
 }
 
 .header-question {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.85);
-    margin: 0 0 8px 0;
-    letter-spacing: -0.2px;
+    color: #ffffff;
+    margin: 0 0 12px 0;
+    letter-spacing: 0.5px;
+    opacity: 0.95;
 }
 
 .service-name {
-    font-size: 42px;
+    font-size: 56px;
     font-weight: 800;
     color: #ffffff;
     margin: 0;
-    letter-spacing: -1px;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+    letter-spacing: 2px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 /* 메인 이미지 */
@@ -184,15 +185,17 @@ body {
     }
 
     .onboarding-header {
-        margin-bottom: 24px;
+        margin-bottom: 28px;
     }
 
     .header-question {
-        font-size: 14px;
+        font-size: 15px;
+        letter-spacing: 0.3px;
     }
 
     .service-name {
-        font-size: 32px;
+        font-size: 40px;
+        letter-spacing: 1.5px;
     }
 
     .onboarding-main-image {
