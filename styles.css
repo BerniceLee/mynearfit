@@ -55,6 +55,29 @@ body {
     width: 100%;
 }
 
+/* 헤더 텍스트 */
+.onboarding-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.header-question {
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 8px 0;
+    letter-spacing: -0.2px;
+}
+
+.service-name {
+    font-size: 42px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: -1px;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
 /* 메인 이미지 */
 .onboarding-main-image {
     text-align: center;
@@ -158,6 +181,18 @@ body {
 @media (max-width: 767px) {
     .onboarding-container {
         padding: 40px 20px 120px;
+    }
+
+    .onboarding-header {
+        margin-bottom: 24px;
+    }
+
+    .header-question {
+        font-size: 14px;
+    }
+
+    .service-name {
+        font-size: 32px;
     }
 
     .onboarding-main-image {
