@@ -313,7 +313,8 @@ function handleRecenter() {
     searchCenter = null;
 
     // 현재 위치 기준으로 시설 재조회
-    const radius = selectedRadius * 1000; // km → m
+    // selectedRadius가 null이면 10km 기본값 사용
+    const radius = (selectedRadius !== null ? selectedRadius : 10) * 1000; // km → m
     fetchNearbyFacilities(markerPosition, radius);
 
     showStatusMessage("내 위치 기준으로 시설을 다시 불러왔어요.");
@@ -988,13 +989,14 @@ function highlightFacilityCard(facilityId) {
 function applyFilters() {
     console.log(`[DEBUG] applyFilters() 실행 시작 - activeFilters:`, Array.from(activeFilters), `selectedRadius: ${selectedRadius}km`);
 
-    if (!currentMarker) {
-        console.warn("[DEBUG] 현재 위치 마커가 없어 필터를 적용할 수 없습니다.");
+    // 거리 계산 기준점 가져오기 (검색 위치 > 사용자 위치 > 지도 중심)
+    const basePos = getDistanceBase();
+    if (!basePos) {
+        console.warn("[DEBUG] 거리 계산 기준점이 없어 필터를 적용할 수 없습니다.");
         return;
     }
 
-    const userPos = currentMarker.getPosition();
-    console.log(`[DEBUG] 전체 시설 수: ${facilities.length}`);
+    console.log(`[DEBUG] 거리 기준점:`, basePos, `/ 전체 시설 수: ${facilities.length}`);
 
     // 거리 계산 함수 (Haversine formula, km 단위)
     function calculateDistance(lat1, lng1, lat2, lng2) {
@@ -1012,8 +1014,10 @@ function applyFilters() {
     visibleFacilities = facilities.filter((f) => {
         // 1. 반경 필터 (selectedRadius가 null이면 거리 제한 없음)
         if (selectedRadius !== null) {
-            const distanceKm = calculateDistance(userPos.getLat(), userPos.getLng(), f.lat, f.lng);
-            if (distanceKm > selectedRadius) return false;
+            const distanceKm = calculateDistance(basePos.lat, basePos.lng, f.lat, f.lng);
+            if (distanceKm > selectedRadius) {
+                return false;
+            }
         }
 
         // 2. 속성 필터 - activeFilters가 비어있으면 모두 통과
@@ -1140,7 +1144,8 @@ function handleSearchResultClick(lat, lng, placeName) {
     searchCenter = newPos;
 
     // 선택한 장소를 기준으로 반경 내 시설 재조회
-    const radius = selectedRadius * 1000; // km → m
+    // selectedRadius가 null이면 10km 기본값 사용
+    const radius = (selectedRadius !== null ? selectedRadius : 10) * 1000; // km → m
     fetchNearbyFacilities(newPos, radius);
 
     // 상태 메시지 표시
