@@ -212,11 +212,11 @@ function initMapWithPosition(lat, lng) {
             { offset: new kakao.maps.Point(12, 35) }
         );
 
-        // CSV 데이터용 마커 (기본 주황색 마커)
+        // CSV 데이터용 마커 (초록색 별)
         csvFacilityMarkerImage = new kakao.maps.MarkerImage(
-            "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_orange.png",
-            new kakao.maps.Size(32, 36),
-            { offset: new kakao.maps.Point(16, 36) }
+            "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_green.png",
+            new kakao.maps.Size(24, 35),
+            { offset: new kakao.maps.Point(12, 35) }
         );
 
         // Places 서비스 초기화
