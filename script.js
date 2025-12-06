@@ -40,9 +40,14 @@ let hasRecommendHiddenOnce = false;
 let facilities = []; // 전체 시설 데이터
 let visibleFacilities = []; // 현재 필터링된 시설
 let facilityMarkers = []; // 지도에 표시된 시설 마커들
-let facilityMarkerImage; // 시설 마커 아이콘
+let facilityMarkerImage; // 시설 마커 아이콘 (Kakao API 데이터용)
+let csvFacilityMarkerImage; // CSV 데이터용 마커 아이콘
 let userPosition = null; // 사용자 현재 위치 { lat, lng }
 let searchCenter = null; // 검색으로 선택한 위치 (LatLng 객체)
+
+// ========== CSV 데이터 관리 ==========
+let csvFacilities = []; // CSV에서 로드한 시설 데이터
+let isCsvLoaded = false; // CSV 로딩 완료 여부
 
 // ========== 검색 결과 관리 ==========
 let searchResults = [];
@@ -90,6 +95,9 @@ window.addEventListener("load", () => {
         recenterButton.addEventListener("click", handleRecenter);
         console.log("[DEBUG] recenterButton 이벤트 등록 완료");
     }
+
+    // CSV 데이터 로드 시작
+    loadCsvData();
 });
 
 // ========== 페이지 전환 유틸리티 (스크롤 리셋 포함) ==========
@@ -197,10 +205,18 @@ function initMapWithPosition(lat, lng) {
             { offset: new kakao.maps.Point(16, 36) }
         );
 
+        // Kakao API 데이터용 마커 (노란색 별)
         facilityMarkerImage = new kakao.maps.MarkerImage(
             "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png",
             new kakao.maps.Size(24, 35),
             { offset: new kakao.maps.Point(12, 35) }
+        );
+
+        // CSV 데이터용 마커 (기본 주황색 마커)
+        csvFacilityMarkerImage = new kakao.maps.MarkerImage(
+            "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_orange.png",
+            new kakao.maps.Size(32, 36),
+            { offset: new kakao.maps.Point(16, 36) }
         );
 
         // Places 서비스 초기화
@@ -764,8 +780,15 @@ function setupFacilityButtons() {
             }, 2000);
         } else if (e.target.classList.contains("facility-nav-button")) {
             // 길찾기 (카카오맵 열기)
-            if (facility.url) {
-                window.open(facility.url, "_blank");
+            let navUrl = facility.url;
+
+            // CSV 데이터는 URL이 없으므로 생성
+            if (!navUrl && facility.lat && facility.lng) {
+                navUrl = `https://map.kakao.com/link/to/${encodeURIComponent(facility.name)},${facility.lat},${facility.lng}`;
+            }
+
+            if (navUrl) {
+                window.open(navUrl, "_blank");
             } else {
                 showStatusMessage("길찾기 정보를 찾을 수 없어요.");
             }
@@ -899,7 +922,20 @@ function fetchNearbyFacilities(centerLatLng, radiusMeters) {
 
             // 모든 키워드 검색 완료
             if (completed === keywords.length) {
-                console.log("[DEBUG] 시설 검색 완료:", facilities.length, "개 발견");
+                console.log("[DEBUG] Kakao API 검색 완료:", facilities.length, "개 발견");
+
+                // CSV 데이터 병합
+                if (isCsvLoaded && csvFacilities.length > 0) {
+                    const nearbyCsvFacilities = getNearbyCsvFacilities(centerLatLng, radius);
+                    facilities = mergeFacilities(facilities, nearbyCsvFacilities);
+                    console.log("[DEBUG] CSV 데이터 병합 완료: 총", facilities.length, "개 시설");
+                }
+
+                // Kakao API 데이터에 source 표시
+                facilities.forEach(f => {
+                    if (!f.source) f.source = 'kakao';
+                });
+
                 applyFilters(); // 필터 적용 및 UI 업데이트
             }
         }, options);
@@ -922,12 +958,26 @@ function renderFacilityMarkers(facilitiesToShow) {
     facilityMarkers.forEach(marker => marker.setMap(null));
     facilityMarkers = [];
 
+    // CSV와 Kakao 마커 개수 카운트
+    let csvCount = 0;
+    let kakaoCount = 0;
+
     // 새 마커 생성
     facilitiesToShow.forEach(facility => {
         const position = new kakao.maps.LatLng(facility.lat, facility.lng);
+
+        // 데이터 출처에 따라 다른 마커 이미지 사용
+        const markerImage = facility.source === 'csv' ? csvFacilityMarkerImage : facilityMarkerImage;
+
+        if (facility.source === 'csv') {
+            csvCount++;
+        } else {
+            kakaoCount++;
+        }
+
         const marker = new kakao.maps.Marker({
             position: position,
-            image: facilityMarkerImage,
+            image: markerImage,
             title: facility.name
         });
         marker.setMap(map);
@@ -944,7 +994,7 @@ function renderFacilityMarkers(facilitiesToShow) {
         facilityMarkers.push(marker);
     });
 
-    console.log("[DEBUG] 시설 마커 렌더링 완료:", facilityMarkers.length, "개");
+    console.log(`[DEBUG] 시설 마커 렌더링 완료: 총 ${facilityMarkers.length}개 (CSV: ${csvCount}개, Kakao: ${kakaoCount}개)`);
 }
 
 // ========== 시설 리스트 렌더링 ==========
@@ -1196,4 +1246,248 @@ function handleSearchResultClick(lat, lng, placeName) {
     setTimeout(() => {
         hideStatusMessage();
     }, 3000);
+}
+
+// ==================== CSV 데이터 로딩 및 처리 ====================
+
+/**
+ * CSV 파일 로드 및 파싱
+ */
+function loadCsvData() {
+    console.log("[CSV] 데이터 로딩 시작...");
+
+    Papa.parse("datafile/merged.csv", {
+        download: true,
+        header: true,
+        encoding: "UTF-8",
+        skipEmptyLines: true,
+        complete: function(results) {
+            console.log(`[CSV] 파싱 완료: ${results.data.length}개 행`);
+
+            // CSV 데이터를 앱 형식으로 변환
+            csvFacilities = results.data
+                .map(parseCsvRow)
+                .filter(facility => facility !== null); // 유효하지 않은 데이터 제외
+
+            isCsvLoaded = true;
+            console.log(`[CSV] 유효한 시설 ${csvFacilities.length}개 로드 완료`);
+
+            // CSV 로딩 완료 후, 지도가 이미 초기화되어 있다면 CSV 데이터를 병합
+            if (map && currentMarker && facilities.length > 0) {
+                console.log("[CSV] 지도가 이미 초기화되어 있음 - CSV 데이터 병합 시작");
+                const centerLatLng = currentMarker.getPosition();
+                const radius = (selectedRadius !== null ? selectedRadius : 2) * 1000; // km → m
+
+                const nearbyCsvFacilities = getNearbyCsvFacilities(centerLatLng, radius);
+                console.log(`[CSV] 반경 ${radius}m 내 CSV 시설: ${nearbyCsvFacilities.length}개`);
+
+                facilities = mergeFacilities(facilities, nearbyCsvFacilities);
+                console.log(`[CSV] 병합 완료 - 총 ${facilities.length}개 시설`);
+
+                // 필터 재적용하여 UI 업데이트
+                applyFilters();
+            }
+        },
+        error: function(error) {
+            console.error("[CSV] 로딩 실패:", error);
+        }
+    });
+}
+
+/**
+ * CSV 행을 앱 시설 객체로 변환
+ */
+function parseCsvRow(row) {
+    // 좌표 파싱
+    const lat = parseFloat(row['위도']);
+    const lng = parseFloat(row['경도']);
+    const roadAddress = (row['도로명주소'] || '').trim();
+    const jibunAddress = (row['지번주소'] || '').trim();
+
+    // 위도/경도와 주소가 모두 없으면 제외
+    const hasValidCoords = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+    const hasAddress = roadAddress || jibunAddress;
+
+    if (!hasValidCoords && !hasAddress) {
+        return null; // 위치 정보 없음 - 제외
+    }
+
+    // 좌표가 없으면 제외 (지도에 표시할 수 없음)
+    if (!hasValidCoords) {
+        return null;
+    }
+
+    const facilityName = (row['시설명'] || '').trim();
+    const facilityType = (row['시설구분명'] || '').trim();
+    const ownership = (row['소유주체명'] || '').trim();
+    const businessType = (row['업종명'] || '').trim();
+    const facilityCategory = (row['시설유형명'] || '').trim();
+    const indoorOutdoor = (row['실내외구분명'] || '').trim();
+
+    // 필터 속성 계산
+    const isFree = checkIfFree(facilityType, ownership, businessType);
+    const isIndoor = indoorOutdoor === '실내';
+    const isOutdoor = indoorOutdoor === '실외' || indoorOutdoor !== '실내';
+    const isCourse = checkIfCourse(businessType, facilityCategory, facilityName);
+
+    return {
+        id: `csv_${row['ID']}`,
+        name: facilityName,
+        lat: hasValidCoords ? lat : null,
+        lng: hasValidCoords ? lng : null,
+        address: roadAddress || jibunAddress,
+        url: null, // CSV는 URL 없음 (나중에 생성)
+        isFree,
+        isIndoor,
+        isOutdoor,
+        isCourse,
+        isOpenNow: true, // CSV 데이터는 운영시간 정보 없으므로 true로 설정
+        source: 'csv', // 데이터 출처 표시
+        rawData: row // 원본 데이터 보관
+    };
+}
+
+/**
+ * 무료 시설 여부 판단
+ */
+function checkIfFree(facilityType, ownership, businessType) {
+    // 1. 시설구분명이 "공공"
+    if (facilityType === '공공') return true;
+
+    // 2. 소유주체명이 "지자체"
+    if (ownership === '지자체') return true;
+
+    // 3. 특정 업종명 (무료 실외 시설)
+    const freeBusinessTypes = ['실외운동기구', '간이운동장', '전천후게이트볼장'];
+    if (freeBusinessTypes.includes(businessType)) return true;
+
+    return false;
+}
+
+/**
+ * 걷기 코스 여부 판단
+ */
+function checkIfCourse(businessType, facilityCategory, facilityName) {
+    const courseBusinessTypes = [
+        '간이운동장',
+        '실외운동기구',
+        '전천후게이트볼장',
+        '육상경기장',
+        '파크골프장'
+    ];
+
+    // 업종명으로 판단
+    if (courseBusinessTypes.includes(businessType)) return true;
+
+    // 시설유형명으로 판단
+    if (courseBusinessTypes.includes(facilityCategory)) return true;
+
+    // "공원"이 포함된 경우
+    if (facilityName.includes('공원') ||
+        businessType.includes('공원') ||
+        facilityCategory.includes('공원')) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * 두 시설이 중복인지 판단
+ * - 좌표 기반: 1m 이내
+ * - 시설명 기반: 공백 제거 후 완전 일치
+ */
+function isDuplicate(facility1, facility2) {
+    // 시설명 비교 (공백 제거 후)
+    const name1 = facility1.name.replace(/\s/g, '');
+    const name2 = facility2.name.replace(/\s/g, '');
+
+    if (name1 === name2) {
+        return true; // 시설명 동일 → 중복
+    }
+
+    // 좌표 비교 (둘 다 좌표가 있는 경우만)
+    if (facility1.lat && facility1.lng && facility2.lat && facility2.lng) {
+        const distance = calculateDistance(
+            facility1.lat, facility1.lng,
+            facility2.lat, facility2.lng
+        );
+
+        if (distance <= 1) {
+            return true; // 1m 이내 → 중복
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Haversine 공식을 이용한 두 좌표 간 거리 계산 (미터 단위)
+ */
+function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371000; // 지구 반지름 (미터)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    return distance;
+}
+
+/**
+ * 반경 내 CSV 시설 필터링
+ */
+function getNearbyCsvFacilities(centerLatLng, radiusMeters) {
+    if (!csvFacilities || csvFacilities.length === 0) {
+        console.log("[CSV] csvFacilities 배열이 비어있음");
+        return [];
+    }
+
+    const centerLat = centerLatLng.getLat();
+    const centerLng = centerLatLng.getLng();
+    console.log(`[CSV] 반경 검색 중심: (${centerLat}, ${centerLng}), 반경: ${radiusMeters}m`);
+
+    const nearby = csvFacilities.filter(facility => {
+        // 좌표가 없는 시설은 제외
+        if (!facility.lat || !facility.lng) return false;
+
+        const distance = calculateDistance(centerLat, centerLng, facility.lat, facility.lng);
+        return distance <= radiusMeters;
+    });
+
+    console.log(`[CSV] 반경 내 시설: ${nearby.length}/${csvFacilities.length}개`);
+    return nearby;
+}
+
+/**
+ * CSV 시설과 Kakao API 시설 병합 (중복 제거)
+ */
+function mergeFacilities(kakaoFacilities, csvFacilities) {
+    const merged = [...kakaoFacilities]; // Kakao 데이터를 기본으로 시작
+
+    // CSV 시설을 하나씩 확인하며 중복 체크
+    for (const csvFacility of csvFacilities) {
+        let isDup = false;
+
+        // Kakao 시설들과 중복 체크
+        for (const kakaoFacility of kakaoFacilities) {
+            if (isDuplicate(csvFacility, kakaoFacility)) {
+                isDup = true;
+                break;
+            }
+        }
+
+        // 중복이 아니면 추가
+        if (!isDup) {
+            merged.push(csvFacility);
+        }
+    }
+
+    console.log(`[병합] Kakao: ${kakaoFacilities.length}, CSV: ${csvFacilities.length}, 병합 후: ${merged.length}`);
+    return merged;
 }
