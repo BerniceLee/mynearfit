@@ -212,12 +212,8 @@ function initMapWithPosition(lat, lng) {
             { offset: new kakao.maps.Point(12, 35) }
         );
 
-        // CSV 데이터용 마커 (초록색 별)
-        csvFacilityMarkerImage = new kakao.maps.MarkerImage(
-            "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_green.png",
-            new kakao.maps.Size(24, 35),
-            { offset: new kakao.maps.Point(12, 35) }
-        );
+        // CSV 데이터용 마커는 기본 마커 사용 (null로 설정하면 기본 핀 모양)
+        csvFacilityMarkerImage = null;
 
         // Places 서비스 초기화
         placesService = new kakao.maps.services.Places();
@@ -975,11 +971,17 @@ function renderFacilityMarkers(facilitiesToShow) {
             kakaoCount++;
         }
 
-        const marker = new kakao.maps.Marker({
+        // 마커 생성 (image가 null이면 기본 마커 사용)
+        const markerOptions = {
             position: position,
-            image: markerImage,
             title: facility.name
-        });
+        };
+
+        if (markerImage) {
+            markerOptions.image = markerImage;
+        }
+
+        const marker = new kakao.maps.Marker(markerOptions);
         marker.setMap(map);
 
         // 마커 클릭 이벤트: 해당 카드 강조
