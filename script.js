@@ -873,7 +873,7 @@ function fetchNearbyFacilities(centerLatLng, radiusMeters) {
     }
 
     const radius = radiusMeters || 2000; // 기본 2km
-    const keywords = ["체육관", "헬스장", "요가", "필라테스", "수영장", "공원", "운동", "피트니스", "산책로", "배드민턴", "테니스"];
+    const keywords = ["체육관", "수영장", "공원", "운동", "산책로", "배드민턴", "테니스"];
 
     facilities = [];
     let completed = 0;
