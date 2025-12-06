@@ -1221,9 +1221,10 @@ function handleSearchResultClick(lat, lng, placeName) {
         searchMarker.setMap(null);
     }
 
-    // 새 검색 마커 생성
+    // 새 검색 마커 생성 (빨간색 마커)
     searchMarker = new kakao.maps.Marker({
-        position: newPos
+        position: newPos,
+        image: userMarkerImage // 사용자 위치와 같은 빨간색 마커 사용
     });
     searchMarker.setMap(map);
 
